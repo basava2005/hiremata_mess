@@ -53,27 +53,42 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'messpro_backend.wsgi.application'
 
-# Database Configuration (Supports Oracle Database & SQLite)
+# Database Configuration (Supports Oracle Cloud Autonomous DB, Local Oracle, & SQLite)
 USE_ORACLE = os.environ.get('USE_ORACLE', 'False').lower() in ('true', '1', 'yes')
 
 if USE_ORACLE:
     try:
         import oracledb
-        oracledb.init_oracle_client()
+        # python-oracledb operates in Thin mode by default (no Instant Client installation required)
     except Exception:
-        pass  # Uses python-oracledb thin mode by default
+        pass
+
+    wallet_dir = os.environ.get('ORACLE_WALLET_DIR')
+    wallet_password = os.environ.get('ORACLE_WALLET_PASSWORD')
+    tns_name = os.environ.get('ORACLE_TNS_NAME')
+
+    oracle_options = {'threaded': True}
+    if wallet_dir:
+        # Oracle Cloud Autonomous Database (ATP / ADW) Wallet configuration
+        abs_wallet_dir = str(Path(wallet_dir).resolve()) if not os.path.isabs(wallet_dir) else wallet_dir
+        os.environ['TNS_ADMIN'] = abs_wallet_dir
+        oracle_options['wallet_location'] = abs_wallet_dir
+        if wallet_password:
+            oracle_options['wallet_password'] = wallet_password
+
+    # For Oracle Cloud ATP with Wallet: NAME is the service alias from tnsnames.ora (e.g. 'hiremat_high' or 'hiremat_tp')
+    # For local Oracle: NAME is the pluggable database service name (e.g. 'FREEPDB1' or 'XEPDB1')
+    db_name = tns_name or os.environ.get('ORACLE_SERVICE_NAME', 'FREEPDB1')
 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.oracle',
-            'NAME': os.environ.get('ORACLE_SERVICE_NAME', 'FREEPDB1'),
-            'USER': os.environ.get('ORACLE_USER', 'MESSPRO_ADMIN'),
+            'NAME': db_name,
+            'USER': os.environ.get('ORACLE_USER', 'ADMIN'),
             'PASSWORD': os.environ.get('ORACLE_PASSWORD', 'HirematMess#2026'),
-            'HOST': os.environ.get('ORACLE_HOST', 'localhost'),
-            'PORT': os.environ.get('ORACLE_PORT', '1521'),
-            'OPTIONS': {
-                'threaded': True,
-            },
+            'HOST': '' if wallet_dir else os.environ.get('ORACLE_HOST', 'localhost'),
+            'PORT': '' if wallet_dir else os.environ.get('ORACLE_PORT', '1521'),
+            'OPTIONS': oracle_options,
         }
     }
 else:

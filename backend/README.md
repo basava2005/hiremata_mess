@@ -83,32 +83,113 @@ To switch the React frontend from mock mode to the running Django backend:
 
 ## 🗄️ Database Options
 
-### Option A: SQLite (Default)
+### Option A: SQLite (Default Development)
 - Zero setup needed.
 - Uses local `backend/db.sqlite3`.
 - Active by default (`USE_ORACLE=False`).
 
-### Option B: Oracle Database (19c / 21c / 23ai)
-To connect to an Oracle Database instance:
-1. Run the DDL schema in your Oracle SQL client:
-   ```sql
-   -- File: backend/oracle_schema.sql
-   @oracle_schema.sql
+### Option B: Oracle Cloud (OCI Always Free Autonomous Database - ATP)
+To connect to a production **Oracle Cloud Database**:
+1. **Create an Always Free Autonomous Database on OCI** (follow the step-by-step guide below).
+2. Download the client credentials wallet zip (`Wallet_xxxx.zip`).
+3. Extract the contents into a folder (e.g. `backend/wallet/`).
+4. Update `.env`:
+   ```env
+   USE_ORACLE=True
+   ORACLE_WALLET_DIR=backend/wallet
+   ORACLE_TNS_NAME=hirematmess_high   # Service alias found in backend/wallet/tnsnames.ora
+   ORACLE_USER=ADMIN
+   ORACLE_PASSWORD=YourChosenPassword123
    ```
-2. Set the environment variables before starting the backend:
+5. Apply migrations and seed data:
    ```bash
-   # On Windows (PowerShell)
-   $env:USE_ORACLE="True"
-   $env:ORACLE_HOST="localhost"
-   $env:ORACLE_PORT="1521"
-   $env:ORACLE_SERVICE_NAME="FREEPDB1"
-   $env:ORACLE_USER="MESSPRO_ADMIN"
-   $env:ORACLE_PASSWORD="YourSecurePassword"
-   
    python manage.py migrate
    python manage.py seed_data
-   python manage.py runserver 8000
    ```
+
+---
+
+## ☁️ Step-by-Step Cloud & Service Credentials Setup Guide
+
+### 1. Oracle Cloud Database (OCI Autonomous Transaction Processing)
+1. Go to **[cloud.oracle.com](https://cloud.oracle.com)** and sign in (or create an **Always Free** account).
+2. In the OCI Console Navigation Menu (top-left ☰), go to **Oracle Database** → **Autonomous Database**.
+3. Click **Create Autonomous Database**:
+   - **Display Name**: `HirematMessDB`
+   - **Database Name**: `hirematmess`
+   - **Workload Type**: Select **Transaction Processing (ATP)**.
+   - **Deployment Type**: **Shared Infrastructure**.
+   - **Always Free**: Toggle **ON** (Free tier gives you 20 GB storage and 1 OCPU forever).
+   - **Admin Password**: Choose a strong password (e.g. `HirematMess#2026`) and save it.
+   - **Access Type**: Select **Secure access from anywhere** (or allow your IP).
+4. Click **Create Autonomous Database**. Wait ~2-3 minutes for the state to turn green (**Available**).
+5. Click **DB Connection** button at the top:
+   - Under **Wallet Type**, select **Instance Wallet**.
+   - Click **Download Wallet**. Enter a wallet password (or leave blank) and download `Wallet_hirematmess.zip`.
+6. Extract the zip into your project at `backend/wallet/` (contains `tnsnames.ora`, `cwallet.sso`, etc.).
+7. Open `backend/wallet/tnsnames.ora` to see your service names (e.g. `hirematmess_high`, `hirematmess_tp`).
+8. In `.env`, set:
+   ```env
+   USE_ORACLE=True
+   ORACLE_WALLET_DIR=backend/wallet
+   ORACLE_TNS_NAME=hirematmess_high
+   ORACLE_USER=ADMIN
+   ORACLE_PASSWORD=HirematMess#2026
+   ```
+
+---
+
+### 2. Firebase Cloud Messaging Setup (Push & In-App Alerts)
+1. Go to **[console.firebase.google.com](https://console.firebase.google.com)** and sign in with your Google Account.
+2. Click **Add project** (or **Create a project**):
+   - Enter Project Name: `hiremat-mess-davangere`
+   - Disable Google Analytics (optional) and click **Create Project**.
+3. In the Project Overview page, click the **Web icon (`</>`)** to register a web app:
+   - App nickname: `MessPro Web`
+   - Check **Also set up Firebase Hosting** (optional) and click **Register app**.
+4. You will see your `firebaseConfig` object containing:
+   - `apiKey`
+   - `authDomain`
+   - `projectId`
+   - `storageBucket`
+   - `messagingSenderId`
+   - `appId`
+5. Copy these values into `.env`:
+   ```env
+   VITE_FIREBASE_API_KEY=AIzaSy...
+   VITE_FIREBASE_AUTH_DOMAIN=hiremat-mess-davangere.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=hiremat-mess-davangere
+   VITE_FIREBASE_STORAGE_BUCKET=hiremat-mess-davangere.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=...
+   VITE_FIREBASE_APP_ID=1:...
+   ```
+6. **Enable Web Push Certificates (VAPID Key)**:
+   - Go to **Project Settings** (gear icon ⚙️) → **Cloud Messaging** tab.
+   - Scroll down to **Web configuration** → **Web Push certificates** → click **Generate key pair**.
+7. **(Optional) Backend Service Account Key**:
+   - In **Project Settings** → **Service accounts** tab.
+   - Click **Generate new private key** → saves a JSON file.
+   - Put this JSON in `backend/` and set `FIREBASE_SERVICE_ACCOUNT_KEY=backend/serviceAccountKey.json` in `.env`.
+
+---
+
+### 3. Razorpay Payment Gateway Setup
+1. Go to **[dashboard.razorpay.com](https://dashboard.razorpay.com)** and sign up / log in.
+2. At the top-right header, ensure you are in **Test Mode** (toggle says "Test Mode").
+3. In the left navigation menu, go to **Account & Settings** (or **Settings**).
+4. Under **API Keys**, click **Generate Key** (or **Regenerate Test Key**):
+   - **Key ID**: starts with `rzp_test_...`
+   - **Key Secret**: a secure random string (displayed once upon generation).
+5. Copy both into your root `.env`:
+   ```env
+   VITE_RAZORPAY_KEY_ID=rzp_test_YourKeyHere
+   RAZORPAY_KEY_ID=rzp_test_YourKeyHere
+   RAZORPAY_KEY_SECRET=YourSecretKeyHere
+   ```
+6. Done! Test payments will simulate all Indian payment methods:
+   - UPI (GPay, PhonePe, Paytm, QR code)
+   - Credit/Debit Cards
+   - NetBanking (SBI, HDFC, ICICI, etc.)
 
 ---
 
