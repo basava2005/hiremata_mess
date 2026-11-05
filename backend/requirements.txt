@@ -1,0 +1,15 @@
+# MessPro Backend Dependencies
+# Hiremat Mess (Davanagere, Karnataka)
+
+django>=5.0,<6.2
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+razorpay>=1.4.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# Database Connectors
+# Default: SQLite (built-in with Python)
+# Optional: Oracle Database 19c / 21c / 23ai
+oracledb>=2.0.0
+

@@ -1,0 +1,40 @@
+from django.urls import path
+from .views import (
+    LoginView, CurrentUserView, StudentsView, StudentDetailView,
+    StudentDeactivateView, StudentActivateView, PlansView,
+    SubscriptionsView, StudentSubscriptionView, PaymentsView,
+    LeavesView, LeaveStatusUpdateView, ExtensionsView,
+    EligibleExtensionsView, ReviewExtensionView, NotificationsView,
+    RazorpayCreateOrderView, RazorpayVerifyPaymentView, FirebaseRegisterTokenView
+)
+
+urlpatterns = [
+    path('auth/login', LoginView.as_view(), name='login'),
+    path('auth/me', CurrentUserView.as_view(), name='current_user'),
+
+    path('students', StudentsView.as_view(), name='students_list_create'),
+    path('students/<str:pk>', StudentDetailView.as_view(), name='student_detail'),
+    path('students/<str:pk>/deactivate', StudentDeactivateView.as_view(), name='student_deactivate'),
+    path('students/<str:pk>/activate', StudentActivateView.as_view(), name='student_activate'),
+
+    path('plans', PlansView.as_view(), name='plans_list'),
+
+    path('subscriptions', SubscriptionsView.as_view(), name='subscriptions_list'),
+    path('subscriptions/student/<str:student_id>', StudentSubscriptionView.as_view(), name='student_subscription'),
+
+    path('payments', PaymentsView.as_view(), name='payments_list_create'),
+
+    path('leaves', LeavesView.as_view(), name='leaves_list_create'),
+    path('leaves/<str:pk>/status', LeaveStatusUpdateView.as_view(), name='leave_status_update'),
+
+    path('extensions', ExtensionsView.as_view(), name='extensions_list'),
+    path('extensions/eligible', EligibleExtensionsView.as_view(), name='eligible_extensions'),
+    path('extensions/review', ReviewExtensionView.as_view(), name='review_extension'),
+
+    path('payments/razorpay/order', RazorpayCreateOrderView.as_view(), name='razorpay_order'),
+    path('payments/razorpay/verify', RazorpayVerifyPaymentView.as_view(), name='razorpay_verify'),
+
+    path('notifications', NotificationsView.as_view(), name='notifications_list'),
+    path('notifications/fcm-token', FirebaseRegisterTokenView.as_view(), name='fcm_register_token'),
+]
+
