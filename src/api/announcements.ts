@@ -61,3 +61,4 @@ export const announcementsApi = {
     await apiClient.delete(`/announcements/${id}`)
   },
 }
+

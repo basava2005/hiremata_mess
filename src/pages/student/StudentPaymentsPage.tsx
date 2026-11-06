@@ -62,7 +62,7 @@ export const StudentPaymentsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-5 max-w-xl mx-auto pb-10">
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
       {/* Page Title & Quick Action */}
       <div className="flex items-center justify-between">
         <div>

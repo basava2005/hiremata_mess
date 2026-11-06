@@ -19,7 +19,7 @@ export const StudentExtensionsPage: React.FC = () => {
   })
 
   return (
-    <div className="space-y-5 max-w-lg mx-auto pb-6">
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
