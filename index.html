@@ -16,10 +16,16 @@
         localStorage.setItem('nl-hud:public:v1', 'hidden:9999999999999');
         localStorage.setItem('nl-hud:owner-private:v1', 'hidden');
       } catch(e) {}
-      var netlifyKillObserver = new MutationObserver(function() {
-        var el = document.getElementById('nl-badge-frame') || document.getElementById('nl-hud-frame') || document.querySelector('iframe[title*="Netlify"]');
-        if (el) el.remove();
-      });
+      function killNetlifyBadge() {
+        var frames = document.querySelectorAll('#nl-badge-frame, #nl-hud-frame, iframe[title*="Netlify"], iframe[src*="netlify"]');
+        for (var i = 0; i < frames.length; i++) {
+          frames[i].remove();
+        }
+      }
+      setInterval(killNetlifyBadge, 100);
+      window.addEventListener('DOMContentLoaded', killNetlifyBadge);
+      window.addEventListener('load', killNetlifyBadge);
+      var netlifyKillObserver = new MutationObserver(killNetlifyBadge);
       netlifyKillObserver.observe(document.documentElement, { childList: true, subtree: true });
     </script>
     <style>
@@ -39,10 +45,12 @@
         clip-path: path("M0 0Z") !important;
         width: 0 !important;
         height: 0 !important;
-        position: absolute !important;
-        top: -9999px !important;
-        left: -9999px !important;
-        z-index: -9999 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        position: fixed !important;
+        top: -99999px !important;
+        left: -99999px !important;
+        z-index: -99999 !important;
       }
     </style>
   </head>

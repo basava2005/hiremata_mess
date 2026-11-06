@@ -1,18 +1,22 @@
 import axios, { AxiosInstance } from 'axios'
 
-// Default to live Render backend in production so it never 404s even if env variables are pending
+// Default to live Render backend in production so it never 404s even if env variables are pending or contain typos
 const LIVE_RENDER_API = 'https://hiremata-mess.onrender.com/api/v1'
 
 let rawApiUrl = (import.meta.env.VITE_API_URL || '').trim()
 
-// In browser production on Netlify (not localhost), if VITE_API_URL is missing or local, use live Render API
-if (!rawApiUrl || rawApiUrl === '/api/v1') {
-  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
-    rawApiUrl = LIVE_RENDER_API
-  } else {
-    rawApiUrl = '/api/v1'
-  }
-} else if (rawApiUrl.startsWith('http') && !rawApiUrl.includes('/api/v1')) {
+// Extract any valid http/https URL anywhere from the input (strips away any accidental 'I_URL', 'VITE_API_URL=', tabs, or text)
+const urlMatch = rawApiUrl.match(/https?:\/\/[^\s"'`]+/i)
+if (urlMatch) {
+  rawApiUrl = urlMatch[0].trim()
+} else if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+  rawApiUrl = LIVE_RENDER_API
+} else {
+  rawApiUrl = '/api/v1'
+}
+
+// Ensure /api/v1 is present for full API endpoints
+if (rawApiUrl.startsWith('http') && !rawApiUrl.includes('/api/v1')) {
   rawApiUrl = rawApiUrl.replace(/\/+$/, '') + '/api/v1'
 }
 
