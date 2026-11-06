@@ -16,6 +16,23 @@ TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '').strip()
 MESS_NAME = "Hiremat Mess Davangere"
 MESS_CONTACT = "9876543210"
 
+def get_fast2sms_key() -> str:
+    key = os.environ.get('FAST2SMS_API_KEY', '').strip()
+    if not key:
+        # Check root .env file dynamically
+        env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if line.strip().startswith('FAST2SMS_API_KEY='):
+                            key = line.strip().split('=', 1)[1].strip()
+                            os.environ['FAST2SMS_API_KEY'] = key
+                            break
+            except Exception:
+                pass
+    return key
+
 def get_whatsapp_url(mobile: str, text: str) -> str:
     """
     Generates a direct WhatsApp link that opens WhatsApp with pre-filled message
@@ -34,20 +51,24 @@ def send_sms(mobile: str, message: str, otp_code: str = None) -> dict:
     if len(clean_mobile) != 10:
         return {'success': False, 'error': f'Invalid mobile number: {mobile}'}
 
-    # 1. Try Fast2SMS (Indian SMS Gateway)
-    if FAST2SMS_API_KEY:
+    fast2sms_key = get_fast2sms_key()
+
+    # 1. Try Fast2SMS (Indian Carrier SMS Gateway)
+    if fast2sms_key:
         try:
-            req_data = {
-                "route": "q",
-                "message": message,
-                "language": "english",
-                "flash": 0,
-                "numbers": clean_mobile
-            }
             if otp_code:
+                # Fast2SMS OTP route (Uses Fast2SMS's official pre-approved Indian DLT template, ZERO DLT registration required!)
                 req_data = {
                     "route": "otp",
                     "variables_values": otp_code,
+                    "numbers": clean_mobile
+                }
+            else:
+                req_data = {
+                    "route": "q",
+                    "message": message,
+                    "language": "english",
+                    "flash": 0,
                     "numbers": clean_mobile
                 }
 
@@ -55,16 +76,22 @@ def send_sms(mobile: str, message: str, otp_code: str = None) -> dict:
                 "https://www.fast2sms.com/dev/bulkV2",
                 data=json.dumps(req_data).encode('utf-8'),
                 headers={
-                    "authorization": FAST2SMS_API_KEY,
+                    "authorization": fast2sms_key,
                     "Content-Type": "application/json"
                 }
             )
-            with urllib.request.urlopen(req, timeout=8) as res:
+            with urllib.request.urlopen(req, timeout=12) as res:
                 res_data = json.loads(res.read().decode('utf-8'))
-                logger.info(f"Fast2SMS response: {res_data}")
+                logger.info(f"Fast2SMS Carrier Response: {res_data}")
+                print(f"\n==========================================")
+                print(f"[FAST2SMS LIVE DISPATCH -> +91 {clean_mobile}]")
+                print(f"Status: {res_data.get('message', res_data)}")
+                print(f"==========================================\n")
                 return {'success': True, 'gateway': 'Fast2SMS', 'data': res_data}
         except Exception as e:
-            logger.error(f"Fast2SMS delivery failed: {e}")
+            logger.error(f"Fast2SMS delivery error: {e}")
+            print(f"[Fast2SMS Delivery Error]: {e}")
+
 
     # 2. Try Twilio
     if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER:
@@ -128,3 +155,4 @@ def send_renewal_reminder_sms(mobile: str, student_name: str, days_left: int, la
     result['whatsappUrl'] = get_whatsapp_url(mobile, msg)
     result['reminderText'] = msg
     return result
+

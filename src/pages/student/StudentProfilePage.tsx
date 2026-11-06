@@ -222,6 +222,9 @@ export const StudentProfilePage: React.FC = () => {
             </div>
           )}
 
+          {/* Invisible reCAPTCHA container for Google Firebase Phone Auth */}
+          <div id="recaptcha-container" />
+
           {step === 'IDLE' && (
             <div className="space-y-4">
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
@@ -270,9 +273,6 @@ export const StudentProfilePage: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
-              <div id="recaptcha-container" />
 
               {/* OTP Input */}
               <div>

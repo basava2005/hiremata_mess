@@ -34,7 +34,7 @@ class Command(BaseCommand):
             price=3500,
             duration_days=30,
             meals_label='Breakfast + Tea + Lunch + Dinner',
-            description='Mandakki Mirchi, Homestyle Dosa, Paddu, Pulao, Avalakki, Kadak Chai/Tea, Unlimited Hot Whole-Wheat Chapati Meals, and Sunday Bele Holige feast.',
+            description='Mandakki Mirchi, Homestyle Dosa, Paddu, Pulao, Avalakki, Kadak Chai/Tea, Unlimited Hot Whole-Wheat Chapati Meals, and Holige feast.',
             is_active=True
         )
         self.stdout.write(f"Created Plan: {plan.name} (Rs. {plan.price})")

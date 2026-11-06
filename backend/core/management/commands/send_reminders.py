@@ -39,3 +39,4 @@ class Command(BaseCommand):
                 count += 1
 
         self.stdout.write(f"Done! Sent renewal reminders to {count} student(s).")
+

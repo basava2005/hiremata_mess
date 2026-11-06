@@ -243,7 +243,7 @@ export const StudentHomePage: React.FC = () => {
                 Hiremat Mess 30-Day Pure Veg Pass
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
-                Enjoy unlimited authentic homestyle food with soft chapatis, tasty saaru, special palya, and Sunday Bele Holige.
+                Enjoy unlimited authentic homestyle food with soft chapatis, tasty saaru, special palya, and Holige.
               </p>
             </div>
 
@@ -255,7 +255,7 @@ export const StudentHomePage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <Sparkles className="w-4 h-4 text-amber-300 flex-shrink-0" />
-                <span>Sunday Bele Holige Feast</span>
+                <span>Holige Feast</span>
               </div>
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <CalendarOff className="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -369,16 +369,16 @@ export const StudentHomePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Sunday Special Banner */}
+          {/* Holige Special Banner */}
           <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-base">🥞</span>
               <span>
-                <strong>Sunday Special:</strong> Authentic Davanagere Bele Holige with Pure Desi Ghee & Majjige!
+                <strong>Holige:</strong> Authentic Davanagere Bele Holige with Pure Desi Ghee & Majjige!
               </span>
             </div>
             <span className="text-[10px] font-bold bg-amber-200/80 px-2 py-0.5 rounded text-amber-900">
-              ಭಾನುವಾರ ವಿಶೇಷ
+              ಹೋಳಿಗೆ ವಿಶೇಷ
             </span>
           </div>
         </CardContent>

@@ -65,9 +65,9 @@ export const LandingPage: React.FC = () => {
       title: 'Special Festival Holige Meals (ಹೋಳಿಗೆ ಊಟ)',
       subtitle: 'ಬಿಸಿ ತುಪ್ಪದೊಂದಿಗೆ ಬೇಳೆ ಹೋಳಿಗೆ • Traditional Obbattu Feast',
       desc: 'Melt-in-mouth traditional Bele Holige drizzled with pure desi ghee, accompanied by Kat Saaru, Kosambari, Payasa, and Chapatis.',
-      badge: 'Special Weekend Feast',
+      badge: 'Special Feast',
       image: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Puran_Poli_with_Ghee_%2C_Maharashtra.jpg',
-      timing: 'Special Days & Sundays',
+      timing: 'Special Holige Meals',
     },
     {
       title: 'Crispy Paddu, Puliyogare & Kadak Tea',
@@ -205,7 +205,7 @@ export const LandingPage: React.FC = () => {
         name: 'Special Bele Holige / Obbattu (ಬೇಳೆ ಹೋಳಿಗೆ)',
         desc: 'Karnataka’s crown jewel! Thin, delicate flatbread stuffed with sweet jaggery-chana dal puran, served hot with pure desi ghee.',
         kannada: 'ಬಿಸಿ ತುಪ್ಪದೊಂದಿಗೆ ಹೋಳಿಗೆ',
-        tag: 'Sunday Special Feast',
+        tag: 'Special Holige Feast',
         image: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Puran_Poli_with_Ghee_%2C_Maharashtra.jpg',
       },
       {
@@ -638,12 +638,12 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Sunday Special mention */}
+              {/* Holige Special mention */}
               <div className="p-4 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
                   <p className="text-xs sm:text-sm font-semibold text-amber-200">
-                    <strong>Sunday Feast:</strong> Fresh Bele Holige (Obbattu) served piping hot with pure ghee and payasa!
+                    <strong>Holige:</strong> Fresh Bele Holige (Obbattu) served piping hot with pure ghee and payasa!
                   </p>
                 </div>
               </div>
@@ -1001,7 +1001,7 @@ export const LandingPage: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-slate-600 text-[11px] pt-1">
-                    Unlimited Hot Tawa Chapatis with Pure Ghee, 2 Karnataka Palyas, Kat Saaru, Rice, Majjige & Sunday Special Holige.
+                    Unlimited Hot Tawa Chapatis with Pure Ghee, 2 Karnataka Palyas, Kat Saaru, Rice, Majjige & Holige.
                   </p>
                 </div>
 
