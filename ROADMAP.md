@@ -149,3 +149,4 @@
 | **Module 4: Printables** | PDF Mess ID Cards, 58mm/80mm Thermal Receipt styling | Frontend | 2 Days | **Sprint 2** |
 | **Module 5: Mobile PWA** | Web manifest, Service worker, Offline QR caching | Frontend | 2 Days | **Sprint 3** |
 | **Module 6: Menu Planner** | Weekly menu rotation calendar, Today's Special widget | Fullstack | 2 Days | **Sprint 3** |
+
