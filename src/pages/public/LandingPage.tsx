@@ -19,6 +19,7 @@ import {
   Award,
   Flame,
   Leaf,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { Button } from '../../components/ui/Button'
@@ -227,128 +228,192 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#fafcf7] text-slate-900 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950">
-      {/* 1. Header with Kannada Branding & Karnataka Heritage */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-emerald-900/10 shadow-sm">
+      {/* 1. Header with Modern Minimalist Branding & Clean Navigation */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-[0_2px_12px_-3px_rgba(0,0,0,0.04)] transition-all">
         {/* Cultural Top Strip */}
-        <div className="bg-emerald-900 text-emerald-100 text-[11px] py-1 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
-          <Leaf className="w-3.5 h-3.5 text-emerald-400" />
-          <span>
-            100% Pure Veg (ಶುದ್ಧ ಸಸ್ಯಾಹಾರಿ) • Authentic Davanagere Homestyle Mess • Anjaneya Layout 5th Cross, BIET Rd, Davangere
-          </span>
+        <div className="bg-[#0b331c] text-emerald-200 text-[11px] py-1.5 px-4 border-b border-emerald-800/40">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Leaf className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+              <span className="font-medium tracking-wide">
+                100% Pure Veg (ಶುದ್ಧ ಸಸ್ಯಾಹಾರಿ) • Authentic Davanagere Homestyle Food
+              </span>
+            </div>
+            <div className="hidden md:flex items-center gap-4 text-emerald-300/90 text-[11px]">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-emerald-400" />
+                <span>BIET Rd, Davangere</span>
+              </span>
+              <span>•</span>
+              <a
+                href="https://api.whatsapp.com/send?phone=919876543210&text=Hello%20Ramesh%20Sir%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white flex items-center gap-1.5 transition-colors font-semibold"
+              >
+                <MessageSquare className="w-3 h-3 text-[#25D366] fill-[#25D366]" />
+                <span>Admin Ramesh Sharma: 9876543210</span>
+              </a>
+            </div>
+          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
           {/* Logo & Brand */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#15803d] flex items-center justify-center text-white shadow-md shadow-emerald-900/20 group-hover:scale-105 transition-transform border border-emerald-500/30">
-              <Utensils className="w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 flex items-center justify-center text-white shadow-sm shadow-emerald-900/30 group-hover:scale-105 transition-transform border border-emerald-400/20">
+              <Utensils className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="font-serif font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight leading-none">
+                <span className="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight leading-none group-hover:text-emerald-800 transition-colors">
                   Hiremat Mess
                 </span>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#15803d] border border-emerald-300">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/80 leading-none">
                   ದಾವಣಗೆರೆ
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-800 font-semibold hidden sm:block mt-0.5">
-                100% Pure Veg • Breakfast, Chapati Meals & Holige Feast
-              </p>
+              <span className="text-[11px] text-slate-500 font-medium tracking-normal mt-0.5 hidden sm:block">
+                Pure Veg Homestyle Meals • BIET Road
+              </span>
             </div>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-slate-700">
-            <a href="#specialties" className="hover:text-[#15803d] transition-colors">
-              Davanagere Specialties
+          {/* Desktop Nav Links - Clean & Pill-styled */}
+          <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold text-slate-600">
+            <a
+              href="#specialties"
+              className="px-3.5 py-1.5 rounded-full hover:text-emerald-800 hover:bg-emerald-50 transition-colors"
+            >
+              Specialties
             </a>
-            <a href="#homestyle" className="hover:text-[#15803d] transition-colors">
-              Homestyle Kitchen (ಮನೆ ಊಟ)
+            <a
+              href="#homestyle"
+              className="px-3.5 py-1.5 rounded-full hover:text-emerald-800 hover:bg-emerald-50 transition-colors"
+            >
+              Our Kitchen
             </a>
-            <a href="#menu" className="hover:text-[#15803d] transition-colors">
-              Daily Menu (ಟಿಫಿನ್ & ಊಟ)
+            <a
+              href="#menu"
+              className="px-3.5 py-1.5 rounded-full hover:text-emerald-800 hover:bg-emerald-50 transition-colors"
+            >
+              Daily Menu
             </a>
-            <a href="#plans" className="hover:text-[#15803d] transition-colors">
-              Monthly Plan (₹3,500)
+            <a
+              href="#plans"
+              className="px-3.5 py-1.5 rounded-full hover:text-emerald-800 hover:bg-emerald-50 transition-colors flex items-center gap-1.5"
+            >
+              <span>Monthly Pass</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-full">
+                ₹3,500
+              </span>
             </a>
-            <a href="#timings" className="hover:text-[#15803d] transition-colors">
+            <a
+              href="#timings"
+              className="px-3.5 py-1.5 rounded-full hover:text-emerald-800 hover:bg-emerald-50 transition-colors"
+            >
               Timings & Location
             </a>
           </nav>
 
-          {/* Sign In CTA */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Action CTAs */}
+          <div className="flex items-center gap-2.5">
+            {/* Quick WhatsApp Link for Desktop */}
+            <a
+              href="https://api.whatsapp.com/send?phone=919876543210&text=Hello%20Ramesh%20Sir%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 px-3.5 py-2 rounded-full transition-all active:scale-95"
+              title="WhatsApp Mess Admin"
+            >
+              <MessageSquare className="w-3.5 h-3.5 fill-[#25D366] text-[#25D366]" />
+              <span>Enquire</span>
+            </a>
+
             {isAuthenticated ? (
               <Link to={getDashboardLink()}>
-                <Button className="bg-[#15803d] hover:bg-[#166534] text-xs sm:text-sm font-bold h-10 px-4 sm:px-5 shadow-sm rounded-xl">
+                <button className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold h-9 sm:h-10 px-4 sm:px-5 rounded-full shadow-xs hover:shadow transition-all flex items-center gap-1.5">
                   <span>Go to Portal ({user?.role?.replace('_', ' ')})</span>
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </Link>
             ) : (
               <Link to="/login">
-                <Button className="bg-[#15803d] hover:bg-[#166534] text-xs sm:text-sm font-bold h-10 px-5 sm:px-6 shadow-md rounded-xl text-white">
+                <button className="bg-[#15803d] hover:bg-[#166534] text-white text-xs sm:text-sm font-bold h-9 sm:h-10 px-5 sm:px-6 rounded-full shadow-xs hover:shadow-md transition-all active:scale-95 flex items-center gap-1.5">
                   <span>Sign In</span>
-                  <ArrowRight className="w-4 h-4 ml-1.5" />
-                </Button>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </Link>
             )}
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               aria-label="Toggle navigation"
             >
-              {mobileNavOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown Nav */}
         {mobileNavOpen && (
-          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-3 animate-in slide-in-from-top-2">
-            <a
-              href="#specialties"
-              onClick={() => setMobileNavOpen(false)}
-              className="block text-sm font-bold text-slate-700 py-1"
-            >
-              Davanagere Specialties (Mandakki Mirchi & Dosa)
-            </a>
-            <a
-              href="#homestyle"
-              onClick={() => setMobileNavOpen(false)}
-              className="block text-sm font-bold text-emerald-800 py-1"
-            >
-              Homestyle Kitchen (ಮನೆ ಊಟ)
-            </a>
-            <a
-              href="#menu"
-              onClick={() => setMobileNavOpen(false)}
-              className="block text-sm font-bold text-slate-700 py-1"
-            >
-              Daily Menu (ಟಿಫಿನ್ & ಊಟ)
-            </a>
-            <a
-              href="#plans"
-              onClick={() => setMobileNavOpen(false)}
-              className="block text-sm font-bold text-[#15803d] py-1"
-            >
-              ₹3,500 Monthly All-Inclusive Plan
-            </a>
-            <a
-              href="#timings"
-              onClick={() => setMobileNavOpen(false)}
-              className="block text-sm font-bold text-slate-700 py-1"
-            >
-              Timings & Davanagere Location
-            </a>
-            <div className="pt-2 border-t">
+          <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-2 animate-in slide-in-from-top-2 shadow-lg">
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+              <a
+                href="#specialties"
+                onClick={() => setMobileNavOpen(false)}
+                className="block text-xs font-bold text-slate-800 px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
+              >
+                Davanagere Specialties (Mandakki Mirchi & Dosa)
+              </a>
+              <a
+                href="#homestyle"
+                onClick={() => setMobileNavOpen(false)}
+                className="block text-xs font-bold text-slate-800 px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
+              >
+                Our Kitchen (ಮನೆ ಊಟ)
+              </a>
+              <a
+                href="#menu"
+                onClick={() => setMobileNavOpen(false)}
+                className="block text-xs font-bold text-slate-800 px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
+              >
+                Daily Menu (ಟಿಫಿನ್ & ಊಟ)
+              </a>
+              <a
+                href="#plans"
+                onClick={() => setMobileNavOpen(false)}
+                className="block text-xs font-bold text-emerald-800 px-3 py-2 rounded-lg bg-emerald-50/60 hover:bg-emerald-100/60 transition-colors flex items-center justify-between"
+              >
+                <span>Monthly All-Inclusive Pass</span>
+                <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-extrabold">₹3,500</span>
+              </a>
+              <a
+                href="#timings"
+                onClick={() => setMobileNavOpen(false)}
+                className="block text-xs font-bold text-slate-800 px-3 py-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-800 transition-colors"
+              >
+                Timings & BIET Rd Location
+              </a>
+            </div>
+
+            <div className="pt-2 flex flex-col gap-2">
+              <a
+                href="https://api.whatsapp.com/send?phone=919876543210&text=Hello%20Ramesh%20Sir%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-3 rounded-xl"
+              >
+                <MessageSquare className="w-4 h-4 fill-[#25D366] text-[#25D366]" />
+                <span>WhatsApp Admin (9876543210)</span>
+              </a>
+
               <Link to="/login" onClick={() => setMobileNavOpen(false)}>
-                <Button className="w-full bg-[#15803d] text-xs font-bold h-10">
+                <button className="w-full bg-[#15803d] text-white text-xs font-bold h-10 rounded-xl shadow-xs">
                   Sign In to Member Portal
-                </Button>
+                </button>
               </Link>
             </div>
           </div>
