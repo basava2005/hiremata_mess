@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     UserAccount, Student, Plan, Subscription, Payment,
-    LeaveRequest, LeaveExtension, Notification, FoodFeedback, PasswordResetRequest
+    LeaveRequest, LeaveExtension, Notification, FoodFeedback, PasswordResetRequest, Announcement
 )
 from .dates import get_subscription_status
 
@@ -22,11 +22,13 @@ class PlanSerializer(serializers.ModelSerializer):
 class StudentSerializer(serializers.ModelSerializer):
     userId = serializers.CharField(source='user_id')
     isActive = serializers.BooleanField(source='is_active')
+    monthlyFee = serializers.IntegerField(source='monthly_fee', required=False, default=3500)
+    category = serializers.CharField(required=False, default='STANDARD')
     currentSubscriptionId = serializers.CharField(source='current_subscription_id', required=False, allow_null=True)
 
     class Meta:
         model = Student
-        fields = ['id', 'branch_id', 'userId', 'name', 'mobile', 'address', 'isActive', 'currentSubscriptionId', 'created_at']
+        fields = ['id', 'branch_id', 'userId', 'name', 'mobile', 'address', 'monthlyFee', 'category', 'isActive', 'currentSubscriptionId', 'created_at']
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     studentId = serializers.CharField(source='student_id')
@@ -122,3 +124,14 @@ class PasswordResetRequestSerializer(serializers.ModelSerializer):
             'id', 'branch_id', 'mobile', 'studentName', 'studentId',
             'requestedPassword', 'status', 'adminNote', 'approvedAt', 'createdAt'
         ]
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    branchId = serializers.CharField(source='branch_id', required=False, default='branch-main-01')
+    effectiveDate = serializers.DateField(source='effective_date', required=False, allow_null=True)
+    createdBy = serializers.CharField(source='created_by', required=False, default='Admin Ramesh Sharma')
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
+
+    class Meta:
+        model = Announcement
+        fields = ['id', 'branchId', 'title', 'message', 'type', 'effectiveDate', 'createdBy', 'createdAt']
+

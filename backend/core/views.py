@@ -1,18 +1,19 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.utils import timezone
 import random
 
 from .models import (
     UserAccount, Student, Plan, Subscription, Payment,
-    LeaveRequest, LeaveExtension, Notification, FoodFeedback, OTPVerification, PasswordResetRequest
+    LeaveRequest, LeaveExtension, Notification, FoodFeedback, OTPVerification, PasswordResetRequest, Announcement
 )
 from .serializers import (
     UserAccountSerializer, StudentSerializer, PlanSerializer,
     SubscriptionSerializer, PaymentSerializer, LeaveRequestSerializer,
-    LeaveExtensionSerializer, NotificationSerializer, FoodFeedbackSerializer, PasswordResetRequestSerializer
+    LeaveExtensionSerializer, NotificationSerializer, FoodFeedbackSerializer, PasswordResetRequestSerializer,
+    AnnouncementSerializer
 )
 from .dates import calculate_last_date, inclusive_days, get_today_ist, get_subscription_status
 from .eligibility import check_leave_eligibility
@@ -85,6 +86,8 @@ class StudentsView(APIView):
         mobile = str(request.data.get('mobile', '')).strip()
         address = request.data.get('address', '')
         initial_password = str(request.data.get('initialPassword') or request.data.get('password') or 'password123').strip()
+        monthly_fee = int(request.data.get('monthlyFee') or request.data.get('monthly_fee') or 3500)
+        category = request.data.get('category', 'STANDARD')
 
         if UserAccount.objects.filter(mobile=mobile).exists():
             return Response({'detail': 'A student or user with this mobile number already exists.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -110,6 +113,8 @@ class StudentsView(APIView):
             name=name,
             mobile=mobile,
             address=address,
+            monthly_fee=monthly_fee,
+            category=category,
             is_active=True
         )
 
@@ -133,6 +138,12 @@ class StudentDetailView(APIView):
             student.mobile = request.data['mobile']
         if 'address' in request.data:
             student.address = request.data['address']
+        if 'monthlyFee' in request.data:
+            student.monthly_fee = int(request.data['monthlyFee'])
+        elif 'monthly_fee' in request.data:
+            student.monthly_fee = int(request.data['monthly_fee'])
+        if 'category' in request.data:
+            student.category = request.data['category']
         student.save()
         return Response(StudentSerializer(student).data)
 
@@ -184,16 +195,28 @@ class PaymentsView(APIView):
 
     def post(self, request):
         student_id = request.data.get('studentId')
-        amount = int(request.data.get('amount', 3500))
-        method = request.data.get('paymentMethod', 'UPI')
-        reference_number = request.data.get('referenceNumber', '')
+        student = Student.objects.filter(id=student_id).first()
+        if not student:
+            return Response({'detail': 'Student not found'}, status=404)
+
+        amount = int(request.data.get('amount') or getattr(student, 'monthly_fee', 3500))
+        method = request.data.get('paymentMethod', 'CASH').upper()
+        reference_number = str(request.data.get('referenceNumber', '')).strip().upper()
         payment_date = request.data.get('date', get_today_ist().isoformat())
         p_status = request.data.get('status', 'SUCCESS')
         notes = request.data.get('notes', '')
 
-        student = Student.objects.filter(id=student_id).first()
-        if not student:
-            return Response({'detail': 'Student not found'}, status=404)
+        if not reference_number:
+            if method == 'CASH':
+                reference_number = f"CASH-{date.today().strftime('%y%m%d')}-{random.randint(1000, 9999)}"
+            else:
+                return Response({'detail': 'Please provide the UPI Transaction Reference / UTR number for UPI payment.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Check duplicate reference number anti-scam
+            if Payment.objects.filter(reference_number__iexact=reference_number).exists():
+                return Response({
+                    'detail': f'Anti-Scam Alert: Reference / UTR "{reference_number}" has already been recorded in the database. Duplicate payment rejected.'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         receipt_number = f"RCP-{date.today().year}-{random.randint(1000, 9999)}"
         new_pay_id = f"pay-{random.randint(100000, 999999)}"
@@ -214,7 +237,12 @@ class PaymentsView(APIView):
         if p_status == 'SUCCESS':
             plan = Plan.objects.first()
             if not plan:
-                plan = Plan.objects.create()
+                plan = Plan.objects.create(
+                    id='plan-standard-30',
+                    name='Standard Monthly Plan (Pure Veg)',
+                    price=student.monthly_fee,
+                    duration_days=30
+                )
 
             start_d = date.today()
             current_sub = Subscription.objects.filter(student=student).order_by('-last_date').first()
@@ -234,6 +262,15 @@ class PaymentsView(APIView):
             )
             student.current_subscription_id = new_sub.id
             student.save()
+
+            # Create notification for student
+            Notification.objects.create(
+                id=f"notif-{random.randint(100000, 999999)}",
+                user_id=student.user_id,
+                title=f"Payment Received: ₹{amount:,} ({method})",
+                message=f"Subscription activated till {last_d.strftime('%d-%b-%Y')}. Receipt: {receipt_number} • Ref: {reference_number}",
+                is_read=False
+            )
 
         return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
 
@@ -531,21 +568,26 @@ class StaffDetailView(APIView):
 class UpiPaymentSubmitView(APIView):
     def post(self, request):
         student_id = request.data.get('studentId')
-        amount = int(request.data.get('amount', 3500))
-        utr_number = str(request.data.get('utrNumber') or request.data.get('referenceNumber', '')).strip()
-        upi_app = request.data.get('upiApp', 'Direct UPI')
-        notes = request.data.get('notes', f'Direct UPI Transfer via {upi_app}')
-
-        if not utr_number or len(utr_number) < 6:
-            return Response({'detail': 'Please enter a valid 12-digit UPI UTR / Transaction Reference number.'}, status=status.HTTP_400_BAD_REQUEST)
-
         student = Student.objects.filter(id=student_id).first()
         if not student:
             return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Prevent duplicate submissions of same UTR
-        if Payment.objects.filter(reference_number=utr_number).exists():
-            return Response({'detail': f'UPI reference {utr_number} has already been registered.'}, status=status.HTTP_400_BAD_REQUEST)
+        amount = int(request.data.get('amount') or getattr(student, 'monthly_fee', 3500))
+        utr_number = str(request.data.get('utrNumber') or request.data.get('referenceNumber', '')).strip().upper()
+        upi_app = request.data.get('upiApp', 'PhonePe')
+        notes = request.data.get('notes', f'Direct UPI Transfer via {upi_app}')
+
+        # Validation: UTR must be at least 10 characters and alphanumeric
+        if not utr_number or len(utr_number) < 10 or not utr_number.isalnum():
+            return Response({
+                'detail': 'Invalid UTR Number. Please enter the valid 12-digit UPI UTR / Transaction Reference number found in your UPI app.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Anti-scam check: Ensure UTR is not already used in DB
+        if Payment.objects.filter(reference_number__iexact=utr_number).exists():
+            return Response({
+                'detail': f'Anti-Scam Alert: UPI Transaction UTR "{utr_number}" has already been claimed for another payment in our system! Duplicate submission detected. If this is an error, please contact Hiremat Mess Admin.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         receipt_number = f"RCP-{date.today().year}{date.today().month:02d}-{random.randint(1000, 9999)}"
         new_pay_id = f"pay-upi-{random.randint(100000, 999999)}"
@@ -568,7 +610,7 @@ class UpiPaymentSubmitView(APIView):
             plan = Plan.objects.create(
                 id='plan-standard-30',
                 name='Standard Monthly Plan (Pure Veg)',
-                price=3500,
+                price=student.monthly_fee,
                 duration_days=30
             )
 
@@ -593,8 +635,8 @@ class UpiPaymentSubmitView(APIView):
         Notification.objects.create(
             id=f"notif-{random.randint(100000, 999999)}",
             user_id=student.user_id,
-            title='Direct UPI Payment Received (Rs. 3,500)',
-            message=f"Subscription activated till {last_d.strftime('%d-%b-%Y')}. Receipt: {receipt_number}",
+            title=f"Direct UPI Payment Received (₹{amount:,})",
+            message=f"Pass activated till {last_d.strftime('%d-%b-%Y')}. Receipt: {receipt_number} • UTR: {utr_number}",
             is_read=False
         )
 
@@ -919,5 +961,73 @@ class PasswordResetRequestRejectView(APIView):
             'message': f"Password reset request rejected for {reset_req.student_name}.",
             'data': PasswordResetRequestSerializer(reset_req).data
         }, status=status.HTTP_200_OK)
+
+
+class AnnouncementsView(APIView):
+    def get(self, request):
+        announcements = Announcement.objects.all().order_by('-created_at')
+        return Response(AnnouncementSerializer(announcements, many=True).data)
+
+    def post(self, request):
+        title = request.data.get('title', '').strip()
+        message = request.data.get('message', '').strip()
+        ann_type = request.data.get('type', 'NOTICE')
+        effective_date_str = request.data.get('effectiveDate')
+        created_by = request.data.get('createdBy', 'Hiremat Mess Admin')
+
+        if not title or not message:
+            return Response({'detail': 'Title and message are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        effective_date = None
+        if effective_date_str:
+            try:
+                effective_date = datetime.strptime(str(effective_date_str)[:10], '%Y-%m-%d').date()
+            except Exception:
+                effective_date = None
+
+        new_id = f"ann-{random.randint(100000, 999999)}"
+        announcement = Announcement.objects.create(
+            id=new_id,
+            branch_id='branch-main-01',
+            title=title,
+            message=message,
+            type=ann_type,
+            effective_date=effective_date,
+            created_by=created_by
+        )
+
+        # Broadcast in-app notification to all active students
+        type_prefix = {
+            'MESS_OFF': '🔴 [Mess Holiday Notice]',
+            'SPECIAL_DINNER': '🌟 [Special Dinner / Holige Feast]',
+            'NOTICE': '📢 [Mess Announcement]'
+        }.get(ann_type, '📢 [Mess Announcement]')
+
+        active_students = Student.objects.filter(is_active=True)
+        date_suffix = f" (Date: {effective_date.strftime('%d-%b-%Y')})" if effective_date else ""
+        notifs = [
+            Notification(
+                id=f"notif-{random.randint(100000, 999999)}-{s.id[-4:]}",
+                user_id=s.user_id,
+                title=f"{type_prefix} {title}",
+                message=f"{message}{date_suffix}",
+                is_read=False
+            )
+            for s in active_students if s.user_id
+        ]
+        if notifs:
+            Notification.objects.bulk_create(notifs)
+
+        return Response(AnnouncementSerializer(announcement).data, status=status.HTTP_201_CREATED)
+
+
+class AnnouncementDetailView(APIView):
+    def delete(self, request, pk):
+        ann = Announcement.objects.filter(id=pk).first()
+        if not ann:
+            return Response({'detail': 'Announcement not found.'}, status=status.HTTP_404_NOT_FOUND)
+        ann.delete()
+        return Response({'success': True, 'message': 'Announcement deleted successfully.'})
+
 
 

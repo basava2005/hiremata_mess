@@ -20,12 +20,19 @@ import {
   Sun,
   Moon,
   Heart,
-  BadgeCheck
+  BadgeCheck,
+  Megaphone,
+  Share2,
+  Receipt,
+  MessageSquare,
+  Flame,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { subscriptionsApi } from '../../api/subscriptions'
 import { leavesApi } from '../../api/leaves'
 import { notificationsApi } from '../../api/notifications'
+import { announcementsApi } from '../../api/announcements'
 import { plansApi } from '../../api/plans'
 import { formatDate, formatCurrency, getDaysRemaining } from '../../lib/dates'
 import { checkLeaveEligibility } from '../../lib/eligibility'
@@ -33,15 +40,18 @@ import { StatusBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { CardSkeleton } from '../../components/ui/Skeleton'
-import { Link } from 'react-router-dom'
 import { DirectUpiPaymentModal } from '../../components/payments/DirectUpiPaymentModal'
 import { FoodFeedbackCard } from '../../components/student/FoodFeedbackCard'
+import { Announcement } from '../../types'
 
 export const StudentHomePage: React.FC = () => {
   const { user, student } = useAuth()
   const queryClient = useQueryClient()
   const studentId = student?.id || user?.studentId || 'stud-01'
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false)
+
+  const monthlyFee = student?.monthlyFee || 3500
+  const isPuc = student?.category === 'PUC'
 
   // 1. Fetch Student Subscription
   const {
@@ -52,39 +62,17 @@ export const StudentHomePage: React.FC = () => {
     queryFn: () => subscriptionsApi.getStudentSubscription(studentId),
   })
 
-  // 2. Fetch Plan
-  const { data: plans } = useQuery({
-    queryKey: ['plans'],
-    queryFn: () => plansApi.getPlans(),
-  })
-  const currentPlan = plans?.[0] || subscription?.plan
-
-  // 3. Fetch Leaves to compute eligibility
+  // 2. Fetch Leaves to compute eligibility
   const { data: leaves = [], isLoading: isLeavesLoading } = useQuery({
     queryKey: ['studentLeaves', studentId],
     queryFn: () => leavesApi.getLeaves({ studentId }),
   })
 
-  // 4. Fetch Notifications
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', user?.id],
-    queryFn: () => notificationsApi.getNotifications(user?.id),
+  // 3. Fetch Announcements
+  const { data: announcements = [] } = useQuery({
+    queryKey: ['announcements'],
+    queryFn: () => announcementsApi.getAnnouncements(),
   })
-
-  // Calculate leave eligibility
-  const eligibility = subscription
-    ? checkLeaveEligibility(
-        { startDate: subscription.startDate, lastDate: subscription.lastDate },
-        leaves
-      )
-    : {
-        isEligible: false,
-        maxConsecutiveDays: 0,
-        eligibleDays: 0,
-        leaveDaysCount: 0,
-        mergedRanges: [],
-        qualifyingRanges: [],
-      }
 
   const daysRemaining = subscription ? getDaysRemaining(subscription.lastDate) : 0
   const isPassActive = subscription && subscription.status === 'ACTIVE'
@@ -98,44 +86,51 @@ export const StudentHomePage: React.FC = () => {
     )
   }
 
+  // Active top announcement (e.g. Mess holiday or Special Holige Dinner)
+  const latestAnnouncement = announcements.length > 0 ? announcements[0] : null
+
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-8">
-      {/* 1. Header Greeting & Mess Profile */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+    <div className="space-y-5 max-w-2xl mx-auto pb-10">
+      {/* 1. Header Welcome Bar */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-emerald-900/20 flex-shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-[#15803d] text-white flex items-center justify-center font-black text-lg shadow-md shadow-emerald-900/20 flex-shrink-0">
             {(student?.name || user?.name || 'S').charAt(0).toUpperCase()}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
                 Hi, {student?.name || user?.name || 'Student'} 👋
               </h2>
-              {isPassActive && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-700" />
+              {isPassActive ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">
+                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Active Pass
+                </span>
+              ) : (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300">
+                  Pass Inactive
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Hiremat Mess (ಹಿರೇಮಠ್ ಮೆಸ್) • BIET Rd, Davangere • Mobile: {user?.mobile || student?.mobile}
+              Hiremat Mess Davangere • BIET Rd • {student?.mobile || user?.mobile}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-center">
           <a
-            href="tel:9876543210"
+            href="tel:9353198281"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors border border-slate-200"
-            title="Call Ramesh Sharma (Mess Admin)"
+            title="Call Basavaraj / Ramesh Sharma (Admin)"
           >
-            <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+            <PhoneCall className="w-3.5 h-3.5 text-emerald-700" />
             <span>Call Admin</span>
           </a>
           <button
             onClick={() => setIsRenewModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold shadow-sm shadow-emerald-900/20 transition-all active:scale-95"
           >
             <QrCode className="w-3.5 h-3.5" />
             <span>UPI Pay</span>
@@ -143,12 +138,88 @@ export const StudentHomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Digital Mess Pass / Membership Card */}
+      {/* 2. Announcements Banner (Mess Off / Holiday or Holige Feast) */}
+      {latestAnnouncement && (
+        <div
+          className={`p-4 rounded-2xl border shadow-xs transition-all ${
+            latestAnnouncement.type === 'MESS_OFF'
+              ? 'bg-gradient-to-r from-rose-50 via-rose-50/70 to-white border-rose-200 text-rose-950'
+              : latestAnnouncement.type === 'SPECIAL_DINNER'
+              ? 'bg-gradient-to-r from-amber-50 via-amber-50/70 to-white border-amber-300 text-amber-950'
+              : 'bg-gradient-to-r from-emerald-50 via-emerald-50/70 to-white border-emerald-200 text-emerald-950'
+          }`}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  latestAnnouncement.type === 'MESS_OFF'
+                    ? 'bg-rose-100 text-rose-700'
+                    : latestAnnouncement.type === 'SPECIAL_DINNER'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {latestAnnouncement.type === 'MESS_OFF' ? (
+                  <CalendarOff className="w-4 h-4" />
+                ) : latestAnnouncement.type === 'SPECIAL_DINNER' ? (
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                ) : (
+                  <Megaphone className="w-4 h-4" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                      latestAnnouncement.type === 'MESS_OFF'
+                        ? 'bg-rose-200 text-rose-800'
+                        : latestAnnouncement.type === 'SPECIAL_DINNER'
+                        ? 'bg-amber-200 text-amber-900'
+                        : 'bg-emerald-200 text-emerald-900'
+                    }`}
+                  >
+                    {latestAnnouncement.type === 'MESS_OFF'
+                      ? 'Mess Holiday'
+                      : latestAnnouncement.type === 'SPECIAL_DINNER'
+                      ? 'Special Feast'
+                      : 'Announcement'}
+                  </span>
+                  {latestAnnouncement.effectiveDate && (
+                    <span className="text-[11px] font-bold text-slate-600">
+                      📅 {formatDate(latestAnnouncement.effectiveDate)}
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-bold text-sm text-slate-900 mt-1">
+                  {latestAnnouncement.title}
+                </h4>
+                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  {latestAnnouncement.message}
+                </p>
+              </div>
+            </div>
+
+            <a
+              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                `*Hiremat Mess Notice:* ${latestAnnouncement.title}\n${latestAnnouncement.message}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-[#25D366] hover:bg-white/80 transition-colors flex-shrink-0"
+              title="Share on WhatsApp"
+            >
+              <Share2 className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Apple Wallet / Fintech Style Pass Card */}
       {isPassActive ? (
         /* ACTIVE MEMBERSHIP DIGITAL CARD */
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white p-5 sm:p-6 shadow-xl border border-emerald-700/60">
-          {/* Subtle Decorative Pattern */}
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-[#064e3b] to-emerald-900 text-white p-5 sm:p-6 shadow-xl border border-emerald-700/60">
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-44 h-44 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
           {/* Card Header */}
@@ -156,17 +227,17 @@ export const StudentHomePage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] tracking-widest font-black uppercase text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
-                  DIGITAL MESS PASS
+                  {isPuc ? 'PUC SPECIAL PASS' : 'DIGITAL MESS PASS'}
                 </span>
                 <span className="text-xs text-emerald-200 font-medium">
-                  Pure Veg 100%
+                  100% Pure Veg Davangere
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mt-1.5 text-white">
-                Hiremat Mess Davanagere
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight mt-1 text-white">
+                Hiremat Mess Davangere
               </h3>
               <p className="text-xs text-emerald-200/90 font-medium">
-                {currentPlan?.name || 'Standard Monthly Plan'} • ₹3,500/mo
+                Unlimited Homestyle Meals • ₹{monthlyFee.toLocaleString('en-IN')}/mo
               </p>
             </div>
 
@@ -185,7 +256,7 @@ export const StudentHomePage: React.FC = () => {
                 <span className="font-bold text-white block uppercase tracking-wide">
                   {daysRemaining === 1 ? 'Day Remaining' : 'Days Remaining'}
                 </span>
-                <span>Active until {formatDate(subscription.lastDate)}</span>
+                <span>Active till {formatDate(subscription.lastDate)}</span>
               </div>
             </div>
 
@@ -195,7 +266,7 @@ export const StudentHomePage: React.FC = () => {
               className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-lg border-0 self-start sm:self-center transition-transform active:scale-95"
             >
               <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-slate-950" />
-              Direct UPI Renew (₹3,500)
+              Direct UPI Renew (₹{monthlyFee.toLocaleString('en-IN')})
             </Button>
           </div>
 
@@ -213,13 +284,13 @@ export const StudentHomePage: React.FC = () => {
               <span className="text-[10px] text-emerald-300 uppercase font-semibold block">Meals Covered</span>
               <span className="font-semibold text-emerald-100 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-amber-300 inline" />
-                Lunch + Dinner + Special
+                Lunch + Dinner + Palya
               </span>
             </div>
           </div>
         </div>
       ) : (
-        /* NO ACTIVE SUBSCRIPTION - LUXURY INVITATION / ACTIVATION PASS */
+        /* INACTIVE MEMBERSHIP DIGITAL CARD - WITH DYNAMIC FEE */
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-900 text-white p-6 shadow-xl border border-emerald-700/50">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -227,7 +298,7 @@ export const StudentHomePage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-wider">
-                  MEMBERSHIP PASS
+                  {isPuc ? 'PUC STUDENT PASS' : 'MEMBERSHIP PASS'}
                 </span>
                 <span className="text-xs text-emerald-300 font-semibold">
                   Pure Veg Davanagere Style
@@ -243,7 +314,7 @@ export const StudentHomePage: React.FC = () => {
                 Hiremat Mess 30-Day Pure Veg Pass
               </h3>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
-                Enjoy unlimited authentic homestyle food with soft chapatis, tasty saaru, special palya, and Holige.
+                Enjoy unlimited authentic homestyle food with soft chapatis, tasty saaru, special palya, and Sunday Holige feast.
               </p>
             </div>
 
@@ -255,15 +326,15 @@ export const StudentHomePage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <Sparkles className="w-4 h-4 text-amber-300 flex-shrink-0" />
-                <span>Holige Feast</span>
+                <span>Sunday Holige Feast</span>
               </div>
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <CalendarOff className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                <span>10+ Day Leave Extension Policy</span>
+                <span>10+ Day Leave Policy</span>
               </div>
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
                 <QrCode className="w-4 h-4 text-amber-300 flex-shrink-0" />
-                <span>0% Gateway Fees via Direct UPI</span>
+                <span>0% Gateway Fee Direct UPI</span>
               </div>
             </div>
 
@@ -272,7 +343,9 @@ export const StudentHomePage: React.FC = () => {
               <div>
                 <span className="text-[10px] text-slate-400 uppercase font-semibold block">Monthly Plan Fee</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-black text-amber-300">₹3,500</span>
+                  <span className="text-2xl sm:text-3xl font-black text-amber-300">
+                    ₹{monthlyFee.toLocaleString('en-IN')}
+                  </span>
                   <span className="text-xs text-slate-300 font-medium">/ 30 Days</span>
                 </div>
               </div>
@@ -282,15 +355,72 @@ export const StudentHomePage: React.FC = () => {
                 className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm px-6 py-3 rounded-xl shadow-lg border-0 transition-transform active:scale-95"
               >
                 <QrCode className="w-4 h-4 mr-2 text-slate-950" />
-                Activate Pass via Direct UPI (₹3,500)
+                Activate Pass via Direct UPI (₹{monthlyFee.toLocaleString('en-IN')})
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. Daily Meal Menu & Timings (ಇಂದಿನ ಮೆನು) */}
-      <Card className="border-emerald-200/80 shadow-sm bg-gradient-to-br from-white via-white to-emerald-50/20 overflow-hidden">
+      {/* 4. Quick Actions Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <button
+          onClick={() => setIsRenewModalOpen(true)}
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition-all text-left flex flex-col justify-between"
+        >
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#15803d] flex items-center justify-center font-bold mb-2">
+            <QrCode className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 text-xs block">Pay / Renew</span>
+            <span className="text-[10px] text-slate-400">Direct UPI QR</span>
+          </div>
+        </button>
+
+        <Link
+          to="/student/payments"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition-all text-left flex flex-col justify-between"
+        >
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#15803d] flex items-center justify-center font-bold mb-2">
+            <Receipt className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 text-xs block">Receipts</span>
+            <span className="text-[10px] text-slate-400">Print tax slips</span>
+          </div>
+        </Link>
+
+        <Link
+          to="/student/leaves"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-400 hover:shadow-sm transition-all text-left flex flex-col justify-between"
+        >
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#15803d] flex items-center justify-center font-bold mb-2">
+            <CalendarOff className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 text-xs block">Apply Leave</span>
+            <span className="text-[10px] text-slate-400">10+ day policy</span>
+          </div>
+        </Link>
+
+        <a
+          href="https://api.whatsapp.com/send?phone=919353198281&text=Hello%20Hiremat%20Mess%20Admin,%20I%20have%20a%20query%20regarding%20my%20mess%20subscription."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-[#25D366] hover:shadow-sm transition-all text-left flex flex-col justify-between"
+        >
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#25D366] flex items-center justify-center font-bold mb-2">
+            <MessageSquare className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 text-xs block">WhatsApp</span>
+            <span className="text-[10px] text-slate-400">Chat with admin</span>
+          </div>
+        </a>
+      </div>
+
+      {/* 5. Daily Meal Menu & Timings (ಇಂದಿನ ಮೆನು) */}
+      <Card className="border-emerald-200/80 shadow-xs bg-gradient-to-br from-white via-white to-emerald-50/20 overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -305,7 +435,7 @@ export const StudentHomePage: React.FC = () => {
                   </span>
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Hiremat Mess Davanagere • 100% Homestyle Pure Veg
+                  Hiremat Mess Davangere • 100% Homestyle Pure Veg
                 </CardDescription>
               </div>
             </div>
@@ -361,228 +491,33 @@ export const StudentHomePage: React.FC = () => {
                 <span className="text-[10px] text-slate-400">7:30 - 9:30 PM</span>
               </div>
               <p className="text-xs font-semibold text-slate-800">
-                Soft Chapatis, Mixed Veg Sabzi, Dal Rasam & Rice
+                Soft Chapatis, Mixed Veg Sabzi, Dal Tadka, Rice & Buttermilk
               </p>
               <p className="text-[11px] text-slate-500">
-                ರಾತ್ರಿ ಊಟ
+                ರಾತ್ರಿಯ ಊಟ & ಮಜ್ಜಿಗೆ
               </p>
             </div>
-          </div>
-
-          {/* Holige Special Banner */}
-          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🥞</span>
-              <span>
-                <strong>Holige:</strong> Authentic Davanagere Bele Holige with Pure Desi Ghee & Majjige!
-              </span>
-            </div>
-            <span className="text-[10px] font-bold bg-amber-200/80 px-2 py-0.5 rounded text-amber-900">
-              ಹೋಳಿಗೆ ವಿಶೇಷ
-            </span>
           </div>
         </CardContent>
       </Card>
 
-      {/* 4. FOOD FEEDBACK & RATING (NEW FEATURE) */}
+      {/* 6. Food Feedback Widget */}
       <FoodFeedbackCard
         studentId={studentId}
-        studentName={student?.name || user?.name}
+        studentName={student?.name || user?.name || 'Student'}
       />
 
-      {/* 5. Extension Eligibility Progress Card */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-[#15803d] flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-bold text-slate-900">
-                  Extension Eligibility
-                </CardTitle>
-                <CardDescription className="text-xs text-slate-500">
-                  Rule: 10+ consecutive approved leave days
-                </CardDescription>
-              </div>
-            </div>
-
-            <StatusBadge variant={eligibility.isEligible ? 'APPROVED' : 'PENDING'}>
-              {eligibility.isEligible ? 'Eligible' : 'In Progress'}
-            </StatusBadge>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-3 pt-2">
-          {/* Progress bar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-700">Consecutive Leave Progress</span>
-              <span className="font-bold text-[#15803d]">
-                {eligibility.maxConsecutiveDays} of 10 leave days
-              </span>
-            </div>
-
-            <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  eligibility.isEligible
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600'
-                    : 'bg-emerald-600'
-                }`}
-                style={{
-                  width: `${Math.min(100, (eligibility.maxConsecutiveDays / 10) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Status explanation */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 space-y-1">
-            {eligibility.isEligible ? (
-              <div className="flex items-start gap-2 text-emerald-800 font-medium">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <span>
-                  🎉 You are eligible for an extension! You have {eligibility.eligibleDays} eligible consecutive leave days. Your branch admin will extend your subscription end date.
-                </span>
-              </div>
-            ) : (
-              <p>
-                {eligibility.maxConsecutiveDays > 0 ? (
-                  <span>
-                    You have completed <strong>{eligibility.maxConsecutiveDays} consecutive days</strong> of approved leave. Reach 10 consecutive days to unlock extension credits.
-                  </span>
-                ) : (
-                  <span>
-                    Take at least 10 consecutive approved leave days to become eligible for subscription extensions.
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between pt-1">
-            <Link
-              to="/student/leaves"
-              className="text-xs text-[#15803d] font-semibold hover:underline inline-flex items-center gap-1"
-            >
-              <CalendarOff className="w-3.5 h-3.5" />
-              <span>Request or View Leaves</span>
-              <ChevronRight className="w-3 h-3" />
-            </Link>
-            <Link
-              to="/student/extensions"
-              className="text-xs text-slate-500 font-medium hover:underline inline-flex items-center gap-1"
-            >
-              <span>Extension History</span>
-              <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 6. Quick Action Shortcuts Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Link
-          to="/student/leaves"
-          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <CalendarOff className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-800">Apply Leave</p>
-            <p className="text-[10px] text-slate-500">1 day advance notice</p>
-          </div>
-        </Link>
-
-        <Link
-          to="/student/payments"
-          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#15803d] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <CreditCard className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-800">Payment Receipts</p>
-            <p className="text-[10px] text-slate-500">Direct UPI receipts</p>
-          </div>
-        </Link>
-
-        <button
-          type="button"
-          onClick={() => setIsRenewModalOpen(true)}
-          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group text-left col-span-2 sm:col-span-1"
-        >
-          <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <QrCode className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-800">Direct UPI Pay</p>
-            <p className="text-[10px] text-slate-500">Scan QR & enter UTR</p>
-          </div>
-        </button>
-      </div>
-
-      {/* 7. Latest Notifications */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-slate-600" />
-              <CardTitle className="text-sm font-bold text-slate-800">
-                Latest Notifications
-              </CardTitle>
-            </div>
-            <span className="text-[11px] text-slate-400">Recent updates</span>
-          </div>
-        </CardHeader>
-
-        <CardContent className="divide-y divide-slate-100 p-0">
-          {notifications.slice(0, 3).map((n) => (
-            <div key={n.id} className="p-3.5 flex items-start gap-3 hover:bg-slate-50/60 transition-colors">
-              <div
-                className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                  n.type === 'SUCCESS'
-                    ? 'bg-emerald-500'
-                    : n.type === 'ALERT'
-                    ? 'bg-rose-500'
-                    : n.type === 'WARNING'
-                    ? 'bg-amber-500'
-                    : 'bg-blue-500'
-                }`}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-slate-800">{n.title}</p>
-                  <span className="text-[10px] text-slate-400">{formatDate(n.created_at, 'dd MMM')}</span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{n.message}</p>
-              </div>
-            </div>
-          ))}
-
-          {notifications.length === 0 && (
-            <div className="p-4 text-center text-xs text-slate-400">
-              No recent notifications
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Direct UPI Payment Modal (0% Gateway Fee, 0% GST) */}
+      {/* Direct UPI Payment Modal */}
       <DirectUpiPaymentModal
         open={isRenewModalOpen}
         onClose={() => setIsRenewModalOpen(false)}
-        amount={3500}
+        amount={monthlyFee}
         studentId={studentId}
         studentName={student?.name || user?.name || 'Student'}
         studentMobile={student?.mobile || user?.mobile || '9876543201'}
-        onPaymentSuccess={() => {
+        onPaymentSuccess={(payment) => {
           queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
           queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
-          queryClient.invalidateQueries({ queryKey: ['studentNotifications', studentId] })
           setIsRenewModalOpen(false)
         }}
       />

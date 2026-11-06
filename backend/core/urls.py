@@ -9,7 +9,8 @@ from .views import (
     StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView, FoodFeedbackView,
     SendOtpView, VerifyOtpAndResetPasswordView, SendReminderView,
     PasswordResetRequestSubmitView, PasswordResetRequestsListView,
-    PasswordResetRequestApproveView, PasswordResetRequestRejectView
+    PasswordResetRequestApproveView, PasswordResetRequestRejectView,
+    AnnouncementsView, AnnouncementDetailView
 )
 
 urlpatterns = [
@@ -54,5 +55,8 @@ urlpatterns = [
     path('notifications/fcm-token', FirebaseRegisterTokenView.as_view(), name='fcm_register_token'),
 
     path('feedback', FoodFeedbackView.as_view(), name='food_feedback'),
+
+    path('announcements', AnnouncementsView.as_view(), name='announcements_list_create'),
+    path('announcements/<str:pk>', AnnouncementDetailView.as_view(), name='announcement_detail'),
 ]
 

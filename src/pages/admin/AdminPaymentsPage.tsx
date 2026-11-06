@@ -429,44 +429,76 @@ export const AdminPaymentsPage: React.FC = () => {
                 </label>
                 <select
                   value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
+                  onChange={(e) => {
+                    const chosenId = e.target.value
+                    setStudentId(chosenId)
+                    const st = studentMap.get(chosenId)
+                    if (st?.monthlyFee) {
+                      setAmount(String(st.monthlyFee))
+                    }
+                  }}
                   required
                   className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d]"
                 >
                   <option value="">-- Choose Student --</option>
                   {students.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name} ({s.mobile})
+                      {s.name} ({s.mobile}) - ₹{(s.monthlyFee || 3500).toLocaleString()}/mo {s.category && s.category !== 'STANDARD' ? `[${s.category}]` : ''}
                     </option>
                   ))}
                 </select>
+
+                {studentId && (
+                  <div className="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-[#15803d] flex items-center justify-between">
+                    <span>Configured Monthly Fee:</span>
+                    <span className="font-bold">
+                      ₹{(studentMap.get(studentId)?.monthlyFee || 3500).toLocaleString('en-IN')}
+                      {studentMap.get(studentId)?.category && studentMap.get(studentId)?.category !== 'STANDARD' && (
+                        <span className="ml-1 text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-800">
+                          {studentMap.get(studentId)?.category}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Amount (₹)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-slate-700">
+                      Amount (₹)
+                    </label>
+                    {studentMap.get(studentId)?.monthlyFee && (
+                      <button
+                        type="button"
+                        onClick={() => setAmount(String(studentMap.get(studentId)?.monthlyFee))}
+                        className="text-[10px] text-[#15803d] font-bold hover:underline"
+                      >
+                        Reset Fee
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d]"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d] font-bold"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                    Method
+                    Payment Mode
                   </label>
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value as any)}
                     className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d]"
                   >
-                    <option value="CASH">Cash</option>
-                    <option value="UPI">UPI</option>
+                    <option value="CASH">💵 Cash at Counter</option>
+                    <option value="UPI">📱 Direct UPI / PhonePe</option>
                     <option value="OTHER">Other</option>
                   </select>
                 </div>
@@ -474,14 +506,20 @@ export const AdminPaymentsPage: React.FC = () => {
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                  Reference # (UPI ID / Voucher No)
+                  {paymentMethod === 'CASH'
+                    ? 'Receipt / Cash Voucher (Optional)'
+                    : 'UPI Transaction Reference / UTR Number'}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. UPI-9921448102 or CASH-VCH"
+                  placeholder={
+                    paymentMethod === 'CASH'
+                      ? 'Leave blank to auto-generate CASH-REC'
+                      : 'Enter 12-digit UPI UTR (Anti-scam verified)'
+                  }
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d]"
+                  className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d] font-mono"
                 />
               </div>
 

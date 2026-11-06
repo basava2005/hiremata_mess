@@ -26,6 +26,7 @@ import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage'
 import { AdminLeavesPage } from './pages/admin/AdminLeavesPage'
 import { AdminExtensionsPage } from './pages/admin/AdminExtensionsPage'
 import { AdminStaffPage } from './pages/admin/AdminStaffPage'
+import { AdminAnnouncementsPage } from './pages/admin/AdminAnnouncementsPage'
 
 // Staff Pages
 import { StaffCheckStatusPage } from './pages/staff/StaffCheckStatusPage'
@@ -72,6 +73,7 @@ export function App() {
                 <Route path="payments" element={<AdminPaymentsPage />} />
                 <Route path="leaves" element={<AdminLeavesPage />} />
                 <Route path="extensions" element={<AdminExtensionsPage />} />
+                <Route path="announcements" element={<AdminAnnouncementsPage />} />
               </Route>
             </Route>
 

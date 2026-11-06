@@ -18,6 +18,8 @@ export interface Student {
   name: string
   mobile: string
   address: string
+  monthlyFee?: number
+  category?: 'STANDARD' | 'PUC' | 'CONCESSION' | string
   isActive: boolean
   currentSubscriptionId?: string | null
   created_at: string
@@ -136,5 +138,19 @@ export interface PasswordResetRequest {
   approvedAt?: string | null
   createdAt: string
 }
+
+export type AnnouncementType = 'MESS_OFF' | 'SPECIAL_DINNER' | 'NOTICE'
+
+export interface Announcement {
+  id: string
+  branchId: string
+  title: string
+  message: string
+  type: AnnouncementType
+  effectiveDate?: string
+  createdBy: string
+  createdAt: string
+}
+
 
 

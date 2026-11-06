@@ -12,6 +12,7 @@ import {
   Utensils,
   Shield,
   UserCheck,
+  Megaphone,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { NotificationBell } from '../ui/NotificationBell'
@@ -34,6 +35,7 @@ export const AdminLayout: React.FC = () => {
     { label: 'Payments', path: '/admin/payments', icon: IndianRupee },
     { label: 'Leaves', path: '/admin/leaves', icon: CalendarOff },
     { label: 'Extensions', path: '/admin/extensions', icon: Sparkles },
+    { label: 'Announcements', path: '/admin/announcements', icon: Megaphone },
   ]
 
   const closeMenu = () => setIsMobileMenuOpen(false)

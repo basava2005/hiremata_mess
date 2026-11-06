@@ -1,24 +1,24 @@
 import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard,
   Printer,
   CheckCircle2,
   AlertCircle,
-  Clock,
-  ArrowUpRight,
-  ShieldCheck,
   Receipt,
   Download,
   IndianRupee,
+  Share2,
+  Calendar,
+  Sparkles,
+  ShieldCheck,
+  Check,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { paymentsApi } from '../../api/payments'
-import { subscriptionsApi } from '../../api/subscriptions'
-import { Payment, PaymentStatus } from '../../types'
+import { Payment } from '../../types'
 import { DirectUpiPaymentModal } from '../../components/payments/DirectUpiPaymentModal'
 import { formatCurrency, formatDate } from '../../lib/dates'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { StatusBadge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -31,8 +31,10 @@ export const StudentPaymentsPage: React.FC = () => {
 
   const [isGatewayOpen, setIsGatewayOpen] = useState(false)
   const [selectedPaymentForReceipt, setSelectedPaymentForReceipt] = useState<Payment | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [outcomeNotice, setOutcomeNotice] = useState<string | null>(null)
+  const [isCopied, setIsCopied] = useState(false)
+
+  const monthlyFee = student?.monthlyFee || 3500
+  const isPuc = student?.category === 'PUC'
 
   // Fetch payments
   const { data: payments = [], isLoading } = useQuery({
@@ -40,122 +42,106 @@ export const StudentPaymentsPage: React.FC = () => {
     queryFn: () => paymentsApi.getPayments({ studentId }),
   })
 
-  // Mock gateway payment handler
-  const handleSimulatePayment = async (status: PaymentStatus) => {
-    setIsProcessing(true)
-    setOutcomeNotice(null)
-    try {
-      const res = await paymentsApi.initiateOnlinePayment(studentId, 3500, status)
-      queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
-      queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
-
-      if (status === 'SUCCESS') {
-        setOutcomeNotice('Payment of ₹3,500 successful! Your subscription is activated/renewed.')
-        setTimeout(() => {
-          setIsGatewayOpen(false)
-          setOutcomeNotice(null)
-          setSelectedPaymentForReceipt(res)
-        }, 1200)
-      } else if (status === 'PENDING') {
-        setOutcomeNotice('Payment initiated and pending bank confirmation. Admin will reconcile.')
-        setTimeout(() => {
-          setIsGatewayOpen(false)
-          setOutcomeNotice(null)
-        }, 1400)
-      } else {
-        setOutcomeNotice('Payment transaction failed or was cancelled by user.')
-      }
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const handleRazorpaySuccess = async (details: { paymentId: string; method: string; reference: string }) => {
-    setIsProcessing(true)
-    try {
-      const res = await paymentsApi.initiateOnlinePayment(studentId, 3500, 'SUCCESS')
-      queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
-      queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
-      setIsGatewayOpen(false)
-      setSelectedPaymentForReceipt({
-        ...res,
-        referenceNumber: details.reference,
-        paymentMethod: details.method as any,
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
   const handlePrintReceipt = () => {
     window.print()
   }
 
+  const handleShareWhatsApp = (payment: Payment) => {
+    const text = `*HIREMAT MESS DAVANGERE - PAYMENT RECEIPT*\n` +
+      `Receipt No: ${payment.receiptNumber}\n` +
+      `Student: ${student?.name || user?.name}\n` +
+      `Mobile: ${student?.mobile || user?.mobile}\n` +
+      `Amount Paid: ₹${payment.amount.toLocaleString('en-IN')}\n` +
+      `Method: ${payment.paymentMethod} (UTR/Ref: ${payment.referenceNumber || 'N/A'})\n` +
+      `Date: ${formatDate(payment.date)}\n` +
+      `Status: VERIFIED & ACTIVE ✓\n\n` +
+      `Hiremat Mess Davangere • BIET Road, Davangere\n` +
+      `Contact Admin: 9353198281`
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
+    window.open(url, '_blank')
+  }
+
   return (
-    <div className="space-y-5 max-w-lg mx-auto pb-6">
-      {/* Header */}
+    <div className="space-y-5 max-w-xl mx-auto pb-10">
+      {/* Page Title & Quick Action */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Payments & Receipts
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+            Payment Receipts
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500">
-            View transaction history and download tax receipts
+          <p className="text-xs text-slate-500">
+            Official tax slips & verified monthly pass receipts
           </p>
         </div>
         <Button
           onClick={() => setIsGatewayOpen(true)}
-          className="bg-[#15803d] hover:bg-[#166534] text-xs font-semibold h-9 px-3.5 shadow-sm"
+          className="bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold h-9 px-4 rounded-xl shadow-sm shadow-emerald-900/10 flex items-center gap-1.5"
         >
-          <CreditCard className="w-3.5 h-3.5 mr-1.5" />
-          Pay ₹3,500
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>Pay ₹{monthlyFee.toLocaleString('en-IN')}</span>
         </Button>
       </div>
 
-      {/* Subscription Fee Banner */}
-      <Card className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white border-0 shadow-md">
-        <CardContent className="p-4 sm:p-5 flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-[11px] uppercase tracking-wider text-emerald-400 font-bold">
-              Standard Monthly Plan
-            </span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-extrabold text-white">₹3,500</span>
-              <span className="text-xs text-slate-300">/ 30 calendar days</span>
+      {/* Dynamic Membership Fee Card */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950 via-[#064e3b] to-emerald-900 p-5 text-white shadow-lg border border-emerald-800/40">
+        <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="flex items-start justify-between relative z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+                {isPuc ? 'PUC Special Pass' : 'Pure Veg Monthly Pass'}
+              </span>
+              <span className="text-[10px] text-emerald-200">30 Calendar Days</span>
             </div>
-            <p className="text-xs text-slate-300">Unlimited Homestyle Lunch + Dinner</p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-3xl font-black tracking-tight text-white">
+                ₹{monthlyFee.toLocaleString('en-IN')}
+              </span>
+              <span className="text-xs text-emerald-200/80">/ month</span>
+            </div>
+            <p className="text-xs text-emerald-100/90 mt-1 max-w-xs leading-relaxed">
+              Unlimited homestyle lunch & dinner, soft chapatis, special palya, and Sunday Holige feast.
+            </p>
           </div>
+
           <Button
             size="sm"
             onClick={() => setIsGatewayOpen(true)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
+            className="bg-white hover:bg-emerald-50 text-[#15803d] font-bold text-xs h-9 px-4 rounded-xl shadow-md"
           >
-            Pay Now
+            Pay Direct UPI
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Payments History List */}
-      <Card>
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <CardTitle className="text-base font-bold text-slate-900">
-            Payment History ({payments.length})
-          </CardTitle>
-          <CardDescription className="text-xs text-slate-500">
-            Receipts issued for online, UPI, and cash payments
-          </CardDescription>
-        </CardHeader>
+      {/* Receipts History List */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm">
+              Issued Receipts ({payments.length})
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              Click "View Receipt" to print or download PDF slip
+            </p>
+          </div>
+          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            Instant GST Exemption
+          </span>
+        </div>
 
-        <CardContent className="p-0 divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100">
           {isLoading ? (
-            <TableSkeleton rows={3} />
+            <div className="p-4">
+              <TableSkeleton rows={3} />
+            </div>
           ) : payments.length === 0 ? (
-            <div className="p-6">
+            <div className="p-8">
               <EmptyState
-                icon={<CreditCard className="w-6 h-6" />}
-                title="No payments recorded"
-                description="Make your first subscription fee payment to activate your mess service."
-                actionLabel="Pay ₹3,500"
+                icon={<Receipt className="w-8 h-8 text-slate-400" />}
+                title="No receipts yet"
+                description="Make your monthly subscription fee payment to generate your first verified receipt."
+                actionLabel={`Pay ₹${monthlyFee.toLocaleString('en-IN')}`}
                 onAction={() => setIsGatewayOpen(true)}
               />
             </div>
@@ -163,44 +149,50 @@ export const StudentPaymentsPage: React.FC = () => {
             payments.map((p) => (
               <div
                 key={p.id}
-                className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                className="p-4 flex items-center justify-between hover:bg-slate-50/70 transition-colors"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-slate-900">
-                      {formatCurrency(p.amount)}
-                    </span>
-                    <StatusBadge variant={p.status}>{p.status}</StatusBadge>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#15803d] border border-emerald-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    <Receipt className="w-5 h-5" />
                   </div>
-                  <div className="text-xs text-slate-500 flex items-center gap-2">
-                    <span>{formatDate(p.date)}</span>
-                    <span>•</span>
-                    <span className="font-medium text-slate-700">{p.paymentMethod}</span>
-                    <span>•</span>
-                    <span className="font-mono text-[11px] text-slate-400">{p.receiptNumber}</span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 text-sm">
+                        ₹{p.amount.toLocaleString('en-IN')}
+                      </span>
+                      <StatusBadge variant={p.status}>{p.status}</StatusBadge>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 font-mono">
+                      <span>{p.receiptNumber}</span>
+                      <span>•</span>
+                      <span>{formatDate(p.date)}</span>
+                      <span>•</span>
+                      <span className="font-sans font-semibold text-slate-700">{p.paymentMethod}</span>
+                    </div>
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedPaymentForReceipt(p)}
-                  className="h-8 px-2.5 text-xs text-slate-700 hover:text-[#15803d] hover:border-[#15803d]"
-                >
-                  <Receipt className="w-3.5 h-3.5 mr-1" />
-                  Receipt
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedPaymentForReceipt(p)}
+                    className="h-8 px-3 text-xs font-semibold text-slate-700 hover:text-[#15803d] hover:border-[#15803d] rounded-xl"
+                  >
+                    View Receipt
+                  </Button>
+                </div>
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Direct UPI Payment Modal (0% Gateway Fee, 0% GST) */}
+      {/* Direct UPI Payment Modal */}
       <DirectUpiPaymentModal
         open={isGatewayOpen}
         onClose={() => setIsGatewayOpen(false)}
-        amount={3500}
+        amount={monthlyFee}
         studentId={studentId}
         studentName={student?.name || user?.name || 'Student'}
         studentMobile={student?.mobile || user?.mobile || '9876543201'}
@@ -212,111 +204,139 @@ export const StudentPaymentsPage: React.FC = () => {
         }}
       />
 
-      {/* Printable Receipt Modal */}
+      {/* Modern Printable / Digital Receipt Modal */}
       {selectedPaymentForReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-200 print:shadow-none print:border-0 print:p-0">
-            {/* Receipt Header */}
-            <div className="flex items-start justify-between border-b pb-4">
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded bg-[#15803d] text-white flex items-center justify-center text-xs font-bold">
-                    M
-                  </div>
-                  <h3 className="font-extrabold text-base text-slate-900 tracking-tight">MessPro</h3>
-                </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Hiremat Mess Davangere • Anjaneya Layout 5th Cross, BIET Rd, Davangere 577004
-                </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 my-auto text-slate-900 relative print:shadow-none print:border-0 print:m-0 print:p-0">
+            {/* Top decorative edge */}
+            <div className="text-center pb-4 border-b border-dashed border-slate-300">
+              <div className="w-10 h-10 rounded-2xl bg-[#15803d] text-white font-black flex items-center justify-center mx-auto text-base shadow-md">
+                M
               </div>
+              <h3 className="font-black text-lg text-slate-900 mt-2 tracking-tight">
+                HIREMAT MESS (ಹಿರೇಮಠ್ ಮೆಸ್)
+              </h3>
+              <p className="text-[11px] font-semibold text-[#15803d]">
+                100% Pure Veg Homestyle Kitchen
+              </p>
+              <p className="text-[10px] text-slate-500">
+                Anjaneya Layout 5th Cross, BIET Rd, Davangere 577004
+              </p>
+              <p className="text-[10px] text-slate-400 font-mono">
+                Phone: +91 9353198281 • UPI: 9353198281@ybl
+              </p>
+            </div>
 
-              <div className="text-right">
-                <span className="font-mono text-xs font-bold text-slate-800">
+            {/* Receipt Sub-header */}
+            <div className="py-3.5 border-b border-dashed border-slate-300 flex items-center justify-between text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                  Receipt Number
+                </span>
+                <span className="font-mono font-bold text-slate-900 text-xs">
                   {selectedPaymentForReceipt.receiptNumber}
                 </span>
-                <p className="text-[10px] text-slate-400">
-                  {formatDate(selectedPaymentForReceipt.date)}
-                </p>
               </div>
-            </div>
-
-            {/* Receipt Body */}
-            <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl">
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Received From:</span>
-                  <span className="font-bold text-slate-800">
-                    {student?.name || user?.name}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Mobile:</span>
-                  <span className="font-medium text-slate-700">{user?.mobile}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Payment Mode:</span>
-                  <span className="font-medium text-slate-700">
-                    {selectedPaymentForReceipt.paymentMethod}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Ref No:</span>
-                  <span className="font-mono text-slate-700 truncate">
-                    {selectedPaymentForReceipt.referenceNumber || 'N/A'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="border border-slate-100 rounded-xl overflow-hidden">
-                <div className="bg-slate-100/70 px-3 py-1.5 flex justify-between font-semibold text-slate-700 text-[11px]">
-                  <span>Item Description</span>
-                  <span>Amount</span>
-                </div>
-                <div className="p-3 flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold text-slate-800">Monthly Mess Subscription</p>
-                    <p className="text-[10px] text-slate-500">30 Days Unlimited Meals (Lunch + Dinner)</p>
-                  </div>
-                  <span className="font-bold text-slate-900">
-                    {formatCurrency(selectedPaymentForReceipt.amount)}
-                  </span>
-                </div>
-                <div className="bg-slate-50 px-3 py-2 border-t flex justify-between items-center font-bold text-sm text-slate-900">
-                  <span>Total Paid</span>
-                  <span className="text-[#15803d]">
-                    {formatCurrency(selectedPaymentForReceipt.amount)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                <span className="flex items-center gap-1 text-emerald-700 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Official Computer-Generated Receipt
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                  Payment Date
                 </span>
-                <StatusBadge variant={selectedPaymentForReceipt.status}>
-                  {selectedPaymentForReceipt.status}
-                </StatusBadge>
+                <span className="font-semibold text-slate-800 text-xs">
+                  {formatDate(selectedPaymentForReceipt.date)}
+                </span>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t print:hidden">
+            {/* Student Details */}
+            <div className="py-3 border-b border-dashed border-slate-300 space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Student Name:</span>
+                <span className="font-bold text-slate-900">
+                  {student?.name || user?.name || selectedPaymentForReceipt.studentName || 'Student'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Mobile Number:</span>
+                <span className="font-mono text-slate-800">
+                  {student?.mobile || user?.mobile}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Payment Mode:</span>
+                <span className="font-semibold text-slate-800">
+                  {selectedPaymentForReceipt.paymentMethod}
+                </span>
+              </div>
+              {selectedPaymentForReceipt.referenceNumber && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">UTR / Ref No:</span>
+                  <span className="font-mono font-bold text-slate-900 text-[11px] bg-slate-100 px-1.5 py-0.5 rounded">
+                    {selectedPaymentForReceipt.referenceNumber}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Description & Amount */}
+            <div className="py-3 border-b border-dashed border-slate-300 space-y-2">
+              <div className="flex justify-between text-xs">
+                <div>
+                  <span className="font-bold text-slate-900 block">
+                    30-Day Pure Veg Subscription
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    Unlimited Lunch, Dinner & Special Palya
+                  </span>
+                </div>
+                <span className="font-bold text-slate-900 text-xs">
+                  ₹{selectedPaymentForReceipt.amount.toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              <div className="pt-2 flex justify-between items-center text-sm font-black border-t border-slate-100">
+                <span className="text-slate-900">Total Received</span>
+                <span className="text-emerald-700 text-base">
+                  ₹{selectedPaymentForReceipt.amount.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Verified Stamp */}
+            <div className="py-3 flex items-center justify-between text-xs">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-[11px]">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>OFFICIALLY VERIFIED</span>
+              </div>
+              <span className="text-[10px] text-slate-400">
+                Authorized Signature ✓
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-3 border-t border-slate-200 flex flex-col gap-2 print:hidden">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={handlePrintReceipt}
+                  className="bg-slate-900 hover:bg-black text-white text-xs font-bold h-9 rounded-xl flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Receipt</span>
+                </Button>
+                <Button
+                  onClick={() => handleShareWhatsApp(selectedPaymentForReceipt)}
+                  className="bg-[#25D366] hover:bg-[#1ebe5b] text-white text-xs font-bold h-9 rounded-xl flex items-center justify-center gap-1.5"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>WhatsApp</span>
+                </Button>
+              </div>
+
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => setSelectedPaymentForReceipt(null)}
-                className="text-xs"
+                className="w-full text-xs h-8 text-slate-600 rounded-xl"
               >
-                Close
-              </Button>
-              <Button
-                size="sm"
-                onClick={handlePrintReceipt}
-                className="bg-[#15803d] hover:bg-[#166534] text-xs"
-              >
-                <Printer className="w-3.5 h-3.5 mr-1.5" />
-                Print / Save PDF
+                Close Receipt
               </Button>
             </div>
           </div>

@@ -66,6 +66,8 @@ export const AdminStudentsPage: React.FC = () => {
   const [formName, setFormName] = useState('')
   const [formMobile, setFormMobile] = useState('')
   const [formAddress, setFormAddress] = useState('')
+  const [formMonthlyFee, setFormMonthlyFee] = useState<number>(3500)
+  const [formCategory, setFormCategory] = useState<string>('STANDARD')
   const [formUsername, setFormUsername] = useState('')
   const [formPassword, setFormPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -174,6 +176,8 @@ export const AdminStudentsPage: React.FC = () => {
     setEditingStudent(null)
     setFormName('')
     setFormMobile('')
+    setFormMonthlyFee(3500)
+    setFormCategory('STANDARD')
     setFormUsername('')
     setFormPassword('')
     generateSecurePassword()
@@ -188,6 +192,8 @@ export const AdminStudentsPage: React.FC = () => {
     setEditingStudent(student)
     setFormName(student.name)
     setFormMobile(student.mobile)
+    setFormMonthlyFee(student.monthlyFee || 3500)
+    setFormCategory(student.category || 'STANDARD')
     setFormUsername(student.mobile)
     setFormPassword('')
     setFormAddress(student.address)
@@ -223,6 +229,8 @@ export const AdminStudentsPage: React.FC = () => {
           name: formName.trim(),
           mobile: formMobile.trim(),
           address: formAddress.trim(),
+          monthlyFee: Number(formMonthlyFee) || 3500,
+          category: formCategory,
         })
         queryClient.invalidateQueries({ queryKey: ['adminStudents'] })
         setIsAddModalOpen(false)
@@ -236,6 +244,8 @@ export const AdminStudentsPage: React.FC = () => {
           address: formAddress.trim(),
           password: initialPass,
           username: studentUsername,
+          monthlyFee: Number(formMonthlyFee) || 3500,
+          category: formCategory,
         })
 
         queryClient.invalidateQueries({ queryKey: ['adminStudents'] })
@@ -456,11 +466,21 @@ export const AdminStudentsPage: React.FC = () => {
                             <span className="font-semibold text-slate-900 block">
                               {student.name}
                             </span>
-                            {!student.isActive && (
-                              <span className="text-[10px] text-rose-500 font-bold">
-                                (Deactivated)
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-50 text-[#15803d] border border-emerald-200">
+                                ₹{(student.monthlyFee || 3500).toLocaleString()}/mo
                               </span>
-                            )}
+                              {student.category && student.category !== 'STANDARD' && (
+                                <span className="inline-flex items-center text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  {student.category}
+                                </span>
+                              )}
+                              {!student.isActive && (
+                                <span className="text-[10px] text-rose-500 font-bold">
+                                  (Deactivated)
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -752,6 +772,76 @@ export const AdminStudentsPage: React.FC = () => {
                     </div>
                   </>
                 )}
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-slate-700">
+                      Monthly Mess Fee (₹)
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => { setFormMonthlyFee(3500); setFormCategory('STANDARD') }}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border transition-all ${
+                          formMonthlyFee === 3500 && formCategory === 'STANDARD'
+                            ? 'bg-emerald-100 border-emerald-400 text-[#15803d]'
+                            : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        ₹3,500 Regular
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setFormMonthlyFee(2800); setFormCategory('PUC') }}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border transition-all ${
+                          formMonthlyFee === 2800
+                            ? 'bg-amber-100 border-amber-400 text-amber-800'
+                            : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        ₹2,800 PUC
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setFormMonthlyFee(3000); setFormCategory('PUC') }}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border transition-all ${
+                          formMonthlyFee === 3000
+                            ? 'bg-amber-100 border-amber-400 text-amber-800'
+                            : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        ₹3,000 PUC
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                      <input
+                        type="number"
+                        min={1000}
+                        max={10000}
+                        step={50}
+                        value={formMonthlyFee}
+                        onChange={(e) => setFormMonthlyFee(Number(e.target.value))}
+                        required
+                        className="w-full text-xs p-2.5 pl-6 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d] font-bold"
+                      />
+                    </div>
+                    <select
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#15803d]"
+                    >
+                      <option value="STANDARD">Regular / Degree (₹3,500)</option>
+                      <option value="PUC">PUC Student (Reduced Fee)</option>
+                      <option value="CONCESSION">Special Concession</option>
+                    </select>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Custom monthly fee for PUC or financially constrained students. All future billing will calculate at this rate.
+                  </p>
+                </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-700 mb-1">

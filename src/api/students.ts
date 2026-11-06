@@ -50,6 +50,8 @@ export const studentsApi = {
     address: string
     password?: string
     username?: string
+    monthlyFee?: number
+    category?: string
   }): Promise<Student> => {
     if (USE_MOCKS) {
       const newStudent = mockDB.addStudent(
@@ -57,6 +59,8 @@ export const studentsApi = {
           name: data.name,
           mobile: data.mobile,
           address: data.address,
+          monthlyFee: data.monthlyFee || 3500,
+          category: data.category || 'STANDARD',
           isActive: true,
         },
         data.password,

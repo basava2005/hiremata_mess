@@ -36,13 +36,13 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
   studentId,
   onPaymentSuccess,
 }) => {
-  const upiId = import.meta.env.VITE_UPI_ID || 'hirematmess@upi'
-  const upiName = import.meta.env.VITE_UPI_NAME || 'Hiremat Mess Davangere'
-  const note = `Mess Subscription - ${studentName}`
+  const upiId = '9353198281@ybl'
+  const upiName = 'Basavaraj H Arikatti'
+  const note = `Mess Pass - ${studentName}`
 
   const [copied, setCopied] = useState(false)
   const [utrNumber, setUtrNumber] = useState('')
-  const [selectedApp, setSelectedApp] = useState<'Google Pay' | 'PhonePe' | 'Paytm' | 'BHIM' | 'Other'>('PhonePe')
+  const [selectedApp, setSelectedApp] = useState<'PhonePe' | 'Google Pay' | 'Paytm' | 'BHIM' | 'Other'>('PhonePe')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successPayment, setSuccessPayment] = useState<Payment | null>(null)
@@ -53,9 +53,6 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
   const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
     upiName
   )}&am=${amount}.00&cu=INR&tn=${encodeURIComponent(note)}`
-
-  // High-res dynamic QR code URL
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiUri)}`
 
   const handleCopyUpi = () => {
     navigator.clipboard.writeText(upiId)
@@ -71,8 +68,8 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
     e.preventDefault()
     setErrorMessage(null)
 
-    const cleanedUtr = utrNumber.trim()
-    if (!cleanedUtr || cleanedUtr.length < 6) {
+    const cleanedUtr = utrNumber.trim().toUpperCase()
+    if (!cleanedUtr || cleanedUtr.length < 10) {
       setErrorMessage('Please enter a valid 12-digit UPI UTR / Transaction Reference number from your payment app.')
       return
     }
@@ -84,12 +81,16 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
         amount,
         utrNumber: cleanedUtr,
         upiApp: selectedApp,
-        notes: `Direct UPI transfer from ${studentName} (${studentMobile}) via ${selectedApp}`,
+        notes: `Direct UPI transfer from ${studentName} (${studentMobile}) via ${selectedApp} to ${upiId}`,
       })
       setSuccessPayment(payment)
       onPaymentSuccess(payment)
     } catch (err: any) {
-      setErrorMessage(err.response?.data?.detail || err.message || 'Payment submission failed. Please verify your UTR.')
+      setErrorMessage(
+        err.response?.data?.detail ||
+          err.message ||
+          'Payment submission failed. Please verify your UTR and make sure it has not been submitted previously.'
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -182,16 +183,22 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
 
               {/* QR Code and UPI ID */}
               <div className="flex flex-col items-center justify-center p-4 bg-slate-50/70 border border-slate-200 rounded-2xl">
-                <p className="text-[11px] font-bold text-slate-700 mb-2.5">
-                  Scan to Pay with Any UPI App
-                </p>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-[11px] font-bold text-slate-800">
+                    Scan with PhonePe, Google Pay, or Paytm
+                  </span>
+                </div>
 
-                <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-200">
+                <div className="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200 flex flex-col items-center max-w-[260px]">
                   <img
-                    src={qrCodeUrl}
-                    alt="Hiremat Mess UPI QR Code"
-                    className="w-48 h-48 sm:w-52 sm:h-52 object-contain"
+                    src="/phonepe-qr.jpg"
+                    alt="PhonePe Accepted Here - Basavaraj H Arikatti"
+                    className="w-52 h-auto object-contain rounded-xl"
                   />
+                  <div className="mt-2 text-center">
+                    <p className="font-bold text-xs text-slate-900">Basavaraj H Arikatti</p>
+                    <p className="text-[10px] text-slate-500 font-mono">9353198281@ybl</p>
+                  </div>
                 </div>
 
                 {/* UPI ID Pill with Copy */}
@@ -217,7 +224,7 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-sm transition-all"
                   >
                     <Smartphone className="w-3.5 h-3.5" />
-                    <span>Open in GPay / PhonePe / Paytm</span>
+                    <span>Pay ₹{amount.toLocaleString('en-IN')} in PhonePe / GPay</span>
                     <ExternalLink className="w-3 h-3 text-slate-400" />
                   </button>
                 </div>
@@ -226,18 +233,23 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
               {/* Step 2: Enter 12-Digit UTR */}
               <form onSubmit={handleSubmitPayment} className="space-y-3 pt-1">
                 <div className="border-t border-slate-200 pt-3">
-                  <h4 className="font-bold text-slate-900 text-xs mb-1">
-                    Step 2: Enter Payment Reference (UTR)
-                  </h4>
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="font-bold text-slate-900 text-xs">
+                      Step 2: Enter UPI UTR / Reference Number
+                    </h4>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-[#15803d] border border-emerald-300">
+                      Anti-Scam DB Verified
+                    </span>
+                  </div>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
-                    After completing the ₹3,500 transfer in your UPI app, copy the <strong>12-digit UTR / UPI Ref ID</strong> from the transaction screen and enter it below:
+                    After paying <strong>₹{amount.toLocaleString('en-IN')}</strong> in your UPI app, copy the <strong>12-digit UTR / UPI Ref ID</strong> and submit below.
                   </p>
                 </div>
 
                 {errorMessage && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{errorMessage}</span>
+                  <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-xl flex items-start gap-2 shadow-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
+                    <span className="text-xs font-medium leading-snug">{errorMessage}</span>
                   </div>
                 )}
 
@@ -266,21 +278,35 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
 
                 {/* 12-Digit UTR Number Input */}
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    12-Digit UPI Reference / UTR Number
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold text-slate-700">
+                      12-Digit UPI Transaction ID / UTR
+                    </label>
+                    <span
+                      className={`text-[10px] font-mono font-bold ${
+                        utrNumber.length >= 10 ? 'text-[#15803d]' : 'text-slate-400'
+                      }`}
+                    >
+                      {utrNumber.length} / 12 digits {utrNumber.length >= 10 && '✓'}
+                    </span>
+                  </div>
                   <input
                     type="text"
-                    maxLength={16}
+                    maxLength={18}
                     value={utrNumber}
-                    onChange={(e) => setUtrNumber(e.target.value.replace(/\s+/g, ''))}
-                    placeholder="e.g. 431209876543"
-                    className="w-full text-xs font-mono font-bold tracking-wider p-2.5 rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-all uppercase"
+                    onChange={(e) => setUtrNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                    placeholder="e.g. 431209876543 (from PhonePe/GPay receipt)"
+                    className={`w-full text-xs font-mono font-bold tracking-wider p-2.5 rounded-xl border bg-white focus:ring-2 focus:ring-[#15803d]/20 transition-all uppercase ${
+                      utrNumber.length >= 10
+                        ? 'border-emerald-500 focus:border-emerald-600'
+                        : 'border-slate-300 focus:border-[#15803d]'
+                    }`}
                     required
                   />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    Found under "UPI Transaction ID" or "UTR" in your GPay / PhonePe / Paytm receipt.
-                  </span>
+                  <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Listed as "UTR" or "UPI Ref No" in PhonePe/GPay history.</span>
+                    <span className="text-amber-700 font-medium">Duplicate UTRs rejected</span>
+                  </div>
                 </div>
 
                 {/* Submit Button */}

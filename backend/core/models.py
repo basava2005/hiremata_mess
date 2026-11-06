@@ -35,12 +35,14 @@ class Student(models.Model):
     name = models.CharField(max_length=120)
     mobile = models.CharField(max_length=15)
     address = models.TextField()
+    monthly_fee = models.IntegerField(default=3500)
+    category = models.CharField(max_length=50, default='STANDARD')  # STANDARD, PUC, CONCESSION
     is_active = models.BooleanField(default=True)
     current_subscription_id = models.CharField(max_length=64, null=True, blank=True)
     created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} ({self.mobile})"
+        return f"{self.name} ({self.mobile}) - ₹{self.monthly_fee}"
 
 class Plan(models.Model):
     id = models.CharField(max_length=64, primary_key=True, default='plan-standard-30')
@@ -197,5 +199,25 @@ class PasswordResetRequest(models.Model):
 
     def __str__(self):
         return f"Reset Req {self.id} for {self.student_name} ({self.mobile}) - {self.status}"
+
+
+class Announcement(models.Model):
+    TYPE_CHOICES = (
+        ('MESS_OFF', 'Mess Off / Holiday'),
+        ('SPECIAL_DINNER', 'Special Dinner / Holige Feast'),
+        ('NOTICE', 'General Notice'),
+    )
+    id = models.CharField(max_length=64, primary_key=True)
+    branch_id = models.CharField(max_length=64, default='branch-main-01')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='NOTICE')
+    effective_date = models.DateField(null=True, blank=True)
+    created_by = models.CharField(max_length=64, default='Admin Ramesh Sharma')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.type}] {self.title} ({self.created_at})"
+
 
 
