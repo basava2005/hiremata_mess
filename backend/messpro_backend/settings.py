@@ -53,8 +53,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'messpro_backend.wsgi.application'
 
-# Database Configuration (Supports Oracle Cloud Autonomous DB, Local Oracle, & SQLite)
+# Database Configuration (Supports Oracle Cloud / Local, Free Cloud PostgreSQL/MySQL, & SQLite)
 USE_ORACLE = os.environ.get('USE_ORACLE', 'False').lower() in ('true', '1', 'yes')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if USE_ORACLE:
     try:
@@ -91,7 +92,29 @@ if USE_ORACLE:
             'OPTIONS': oracle_options,
         }
     }
+elif DATABASE_URL:
+    # 100% Free Cloud Database (e.g. Neon.tech, Supabase, Render, Aiven - NO credit card needed)
+    from urllib.parse import urlparse, unquote
+    parsed_url = urlparse(DATABASE_URL)
+    engine = 'django.db.backends.postgresql' if parsed_url.scheme in ('postgres', 'postgresql') else 'django.db.backends.mysql'
+    
+    pg_options = {}
+    if 'sslmode=require' in DATABASE_URL or 'sslmode=verify-full' in DATABASE_URL:
+        pg_options['sslmode'] = 'require'
+
+    DATABASES = {
+        'default': {
+            'ENGINE': engine,
+            'NAME': parsed_url.path[1:],
+            'USER': unquote(parsed_url.username or ''),
+            'PASSWORD': unquote(parsed_url.password or ''),
+            'HOST': parsed_url.hostname,
+            'PORT': parsed_url.port or (5432 if 'postgres' in engine else 3306),
+            'OPTIONS': pg_options,
+        }
+    }
 else:
+    # Default local development database
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
