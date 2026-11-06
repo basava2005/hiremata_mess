@@ -25,12 +25,16 @@ import {
   Copy,
   Check,
   Shield,
+  Send,
+  Bell,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { studentsApi } from '../../api/students'
 import { subscriptionsApi } from '../../api/subscriptions'
 import { paymentsApi } from '../../api/payments'
 import { leavesApi } from '../../api/leaves'
 import { extensionsApi } from '../../api/extensions'
+import { remindersApi } from '../../api/reminders'
 import { Student, Subscription, Payment, LeaveRequest, LeaveExtension } from '../../types'
 import { formatCurrency, formatDate, getDaysRemaining } from '../../lib/dates'
 import { StatusBadge } from '../../components/ui/Badge'
@@ -68,6 +72,30 @@ export const AdminStudentsPage: React.FC = () => {
   } | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+
+  const [remindingStudentId, setRemindingStudentId] = useState<string | null>(null)
+
+  const handleSendReminder = async (student: Student) => {
+    try {
+      setRemindingStudentId(student.id)
+      const res = await remindersApi.sendReminder({ studentId: student.id })
+      toast.success(`Renewal reminder sent to ${student.name}!`, {
+        description: 'Dispatched via Firebase push notification & carrier SMS.',
+      })
+      if (res.reminders?.[0]?.whatsappUrl) {
+        toast('Open in WhatsApp?', {
+          action: {
+            label: 'WhatsApp',
+            onClick: () => window.open(res.reminders[0].whatsappUrl, '_blank'),
+          },
+        })
+      }
+    } catch (err: any) {
+      toast.error('Failed to send reminder: ' + (err.response?.data?.detail || err.message))
+    } finally {
+      setRemindingStudentId(null)
+    }
+  }
 
   const generateSecurePassword = () => {
     const chars = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -430,6 +458,15 @@ export const AdminStudentsPage: React.FC = () => {
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleSendReminder(student)}
+                            disabled={remindingStudentId === student.id}
+                            title="Send Renewal Reminder via Firebase & SMS"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                          >
+                            <Bell className={`w-4 h-4 ${remindingStudentId === student.id ? 'animate-bounce text-amber-600' : ''}`} />
+                          </button>
+
                           <button
                             onClick={() => {
                               setViewingStudent(student)

@@ -1,128 +1,138 @@
 // OTP Verification & Password Management Service
-import { sendFirebaseNotification } from './firebase'
-import { mockDB } from '../mocks/db'
+// Uses Google Firebase Phone Auth (Free 10,000 SMS/mo) with backend verification & WhatsApp fallback
+import { sendFirebasePhoneOtp, verifyFirebasePhoneOtp, sendFirebaseNotification } from './firebase'
+import { apiClient } from '../api/client'
 
-interface StoredOtp {
-  mobile: string
-  otp: string
-  expiresAt: number
-  attempts: number
+export interface SendOtpResult {
+  success: boolean
+  message: string
+  gateway: 'FIREBASE_SMS' | 'BACKEND_SMS'
+  whatsappUrl?: string
 }
-
-const OTP_EXPIRY_MS = 5 * 60 * 1000 // 5 minutes
-const MAX_ATTEMPTS = 5
 
 export const otpService = {
   /**
-   * Generates and dispatches a 6-digit OTP to the student's mobile number
+   * Generates and dispatches a 6-digit OTP directly to the student's mobile number via Firebase SMS
    */
   sendOtp: async (
     mobile: string,
-    purpose: 'PASSWORD_CHANGE' | 'PASSWORD_RESET' = 'PASSWORD_CHANGE'
-  ): Promise<{ success: boolean; message: string; demoOtp: string }> => {
-    // Generate secure 6-digit random OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    const expiresAt = Date.now() + OTP_EXPIRY_MS
-
-    const stored: StoredOtp = {
-      mobile,
-      otp,
-      expiresAt,
-      attempts: 0,
+    purpose: 'PASSWORD_CHANGE' | 'PASSWORD_RESET' = 'PASSWORD_RESET'
+  ): Promise<SendOtpResult> => {
+    const cleanMobile = mobile.replace(/\D/g, '').slice(-10)
+    if (cleanMobile.length !== 10) {
+      throw new Error('Please enter a valid 10-digit mobile number.')
     }
 
-    sessionStorage.setItem(`otp_${mobile}`, JSON.stringify(stored))
+    const maskedMobile = `+91 ******${cleanMobile.slice(-4)}`
 
-    const maskedMobile = `+91 ******${mobile.slice(-4)}`
-    const purposeText = purpose === 'PASSWORD_RESET' ? 'Password Reset' : 'Password Change'
-    const title = `Security OTP • Hiremat Mess`
-    const body = `Your ${purposeText} OTP is ${otp}. Valid for 5 minutes. Do not share with anyone.`
-
-    // Dispatch via Firebase Notification
-    sendFirebaseNotification(title, body, {
-      tag: 'hiremat-otp',
-      type: 'SECURITY_OTP',
-      otp,
-    })
-
-    return {
-      success: true,
-      message: `OTP sent successfully to ${maskedMobile}`,
-      demoOtp: otp,
-    }
-  },
-
-  /**
-   * Verifies the entered OTP
-   */
-  verifyOtp: (mobile: string, enteredOtp: string): { valid: boolean; error?: string } => {
-    const raw = sessionStorage.getItem(`otp_${mobile}`)
-    if (!raw) {
-      return { valid: false, error: 'No active OTP found. Please request a new OTP.' }
-    }
-
+    // 1. Attempt to send via Google Firebase Phone Auth (Free SMS)
     try {
-      const stored: StoredOtp = JSON.parse(raw)
+      await sendFirebasePhoneOtp(cleanMobile, 'recaptcha-container')
 
-      if (Date.now() > stored.expiresAt) {
-        sessionStorage.removeItem(`otp_${mobile}`)
-        return { valid: false, error: 'OTP has expired. Please request a new one.' }
+      // Also notify backend so it registers an active reset intent
+      let whatsappUrl: string | undefined
+      try {
+        const backendRes = await apiClient.post('/auth/otp/send', {
+          mobile: cleanMobile,
+          purpose,
+        })
+        whatsappUrl = backendRes.data?.whatsappUrl
+      } catch {}
+
+      return {
+        success: true,
+        message: `OTP sent via Firebase SMS to ${maskedMobile}.`,
+        gateway: 'FIREBASE_SMS',
+        whatsappUrl,
       }
+    } catch (fbError: any) {
+      console.warn('Firebase Phone Auth attempt:', fbError.message)
 
-      if (stored.attempts >= MAX_ATTEMPTS) {
-        sessionStorage.removeItem(`otp_${mobile}`)
-        return { valid: false, error: 'Maximum verification attempts exceeded. Request a new OTP.' }
-      }
+      // 2. If Firebase Phone Auth provider is not enabled in Firebase Console, fallback to backend OTP
+      try {
+        const backendRes = await apiClient.post('/auth/otp/send', {
+          mobile: cleanMobile,
+          purpose,
+        })
 
-      if (stored.otp.trim() !== enteredOtp.trim()) {
-        stored.attempts += 1
-        sessionStorage.setItem(`otp_${mobile}`, JSON.stringify(stored))
+        const whatsappUrl = backendRes.data?.whatsappUrl
+
         return {
-          valid: false,
-          error: `Incorrect OTP entered. (${MAX_ATTEMPTS - stored.attempts} attempts remaining)`,
+          success: true,
+          message: `OTP dispatched to ${maskedMobile}.`,
+          gateway: 'BACKEND_SMS',
+          whatsappUrl,
         }
+      } catch (backendError: any) {
+        throw new Error(
+          backendError.response?.data?.detail || fbError.message || 'Failed to dispatch verification OTP.'
+        )
       }
-
-      // Valid OTP
-      sessionStorage.removeItem(`otp_${mobile}`)
-      return { valid: true }
-    } catch {
-      return { valid: false, error: 'Invalid verification session.' }
     }
   },
 
   /**
-   * Updates password after OTP verification
+   * Verifies the OTP and updates the password in PostgreSQL
    */
   updatePasswordWithOtp: async (
     mobile: string,
     otp: string,
     newPassword: string
   ): Promise<{ success: boolean; message: string }> => {
-    // 1. Verify OTP
-    const verification = otpService.verifyOtp(mobile, otp)
-    if (!verification.valid) {
-      throw new Error(verification.error || 'OTP verification failed.')
+    const cleanMobile = mobile.replace(/\D/g, '').slice(-10)
+
+    if (!cleanMobile || cleanMobile.length !== 10) {
+      throw new Error('Please enter a valid 10-digit mobile number.')
     }
 
-    // 2. Validate Password Strength (Min 6 characters)
+    if (!otp || otp.trim().length !== 6) {
+      throw new Error('Please enter the 6-digit verification code sent to your mobile.')
+    }
+
     if (!newPassword || newPassword.length < 6) {
       throw new Error('New password must be at least 6 characters long.')
     }
 
-    // 3. Update in mock database
-    mockDB.updateUserPassword(mobile, newPassword)
+    let verifiedByFirebase = false
 
-    // 4. Send Firebase Confirmation
-    sendFirebaseNotification(
-      'Password Updated • Security Alert',
-      'Your MessPro student account password was successfully updated via OTP verification.'
-    )
+    // 1. Attempt Firebase Phone Auth confirmation
+    try {
+      verifiedByFirebase = await verifyFirebasePhoneOtp(otp.trim())
+    } catch (fbError: any) {
+      console.info('Firebase verification check passed to backend:', fbError.message)
+    }
 
-    return {
-      success: true,
-      message: 'Password successfully updated! You can now log in with your new password.',
+    // 2. Complete password update in Django PostgreSQL backend
+    try {
+      if (verifiedByFirebase) {
+        // Firebase already verified phone ownership! Update password directly
+        await apiClient.post('/auth/password/change', {
+          mobile: cleanMobile,
+          newPassword,
+        })
+      } else {
+        // Verify via backend OTP record in PostgreSQL
+        await apiClient.post('/auth/otp/verify-reset', {
+          mobile: cleanMobile,
+          otp: otp.trim(),
+          newPassword,
+        })
+      }
+
+      // 3. Trigger Firebase Push & In-app Notification
+      sendFirebaseNotification(
+        'Password Reset Successful • Hiremat Mess',
+        'Your MessPro account password was successfully updated. You can now log in.'
+      )
+
+      return {
+        success: true,
+        message: 'Password successfully updated! You can now log in with your new password.',
+      }
+    } catch (apiError: any) {
+      throw new Error(
+        apiError.response?.data?.detail || apiError.message || 'Verification or password update failed.'
+      )
     }
   },
 }
-

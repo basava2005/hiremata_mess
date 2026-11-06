@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Users,
@@ -13,7 +13,11 @@ import {
   Phone,
   Star,
   Utensils,
+  BellRing,
+  Send,
+  CheckCircle2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { studentsApi } from '../../api/students'
 import { subscriptionsApi } from '../../api/subscriptions'
@@ -21,6 +25,7 @@ import { paymentsApi } from '../../api/payments'
 import { leavesApi } from '../../api/leaves'
 import { extensionsApi } from '../../api/extensions'
 import { getFoodFeedbacks } from '../../api/feedback'
+import { remindersApi } from '../../api/reminders'
 import { formatCurrency, formatDate, getDaysRemaining } from '../../lib/dates'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { StatusBadge } from '../../components/ui/Badge'
@@ -78,6 +83,47 @@ export const AdminDashboardPage: React.FC = () => {
   const expiredSubs = subscriptions.filter((s) => s.status === 'EXPIRED').length
   const pendingLeaves = leaves.filter((l) => l.status === 'PENDING').length
   const eligibleExtensionCount = eligibleStudents.length
+
+  // Reminder state & handlers
+  const [sendingReminderStudentId, setSendingReminderStudentId] = useState<string | null>(null)
+  const [isBroadcasting, setIsBroadcasting] = useState(false)
+
+  const handleSendSingleReminder = async (studentId: string, studentName: string) => {
+    try {
+      setSendingReminderStudentId(studentId)
+      const res = await remindersApi.sendReminder({ studentId })
+      toast.success(`Reminder sent to ${studentName}!`, {
+        description: 'Dispatched via Firebase & SMS notification.',
+      })
+      if (res.reminders?.[0]?.whatsappUrl) {
+        toast('Open in WhatsApp?', {
+          action: {
+            label: 'Open WhatsApp',
+            onClick: () => window.open(res.reminders[0].whatsappUrl, '_blank'),
+          },
+        })
+      }
+    } catch (err: any) {
+      toast.error('Failed to send reminder: ' + (err.response?.data?.detail || err.message))
+    } finally {
+      setSendingReminderStudentId(null)
+    }
+  }
+
+  const handleBroadcastReminders = async () => {
+    try {
+      setIsBroadcasting(true)
+      const res = await remindersApi.sendReminder({ broadcast: true })
+      toast.success(`Reminders sent to ${res.reminders.length} student(s)!`, {
+        description: 'Dispatched via Firebase & carrier SMS.',
+      })
+    } catch (err: any) {
+      toast.error('Failed to broadcast reminders: ' + (err.response?.data?.detail || err.message))
+    } finally {
+      setIsBroadcasting(false)
+    }
+  }
+
 
   const totalCollectedThisMonth = payments
     .filter((p) => p.status === 'SUCCESS')
@@ -209,12 +255,25 @@ export const AdminDashboardPage: React.FC = () => {
                   Expiring Soon (≤ 3 Days Left)
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Students needing immediate renewal reminders
+                  Students needing immediate renewal reminders via Firebase & SMS
                 </CardDescription>
               </div>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                {expiringSoonSubs.length} Students
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                  {expiringSoonSubs.length} Students
+                </span>
+                {expiringSoonSubs.length > 0 && (
+                  <Button
+                    size="sm"
+                    onClick={handleBroadcastReminders}
+                    isLoading={isBroadcasting}
+                    className="h-8 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs rounded-lg flex items-center gap-1.5"
+                  >
+                    <BellRing className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Remind All</span>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
 
             <CardContent className="p-0 divide-y divide-slate-100">
@@ -226,6 +285,8 @@ export const AdminDashboardPage: React.FC = () => {
                 expiringSoonSubs.map((sub) => {
                   const student = students.find((s) => s.id === sub.studentId)
                   const daysLeft = getDaysRemaining(sub.lastDate)
+                  const isSendingThis = sendingReminderStudentId === sub.studentId
+
                   return (
                     <div
                       key={sub.id}
@@ -250,15 +311,29 @@ export const AdminDashboardPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <Link to={`/admin/payments?studentId=${sub.studentId}`}>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 px-2.5 text-xs text-amber-800 border-amber-200 hover:bg-amber-50"
+                          onClick={() => handleSendSingleReminder(sub.studentId, student?.name || 'Student')}
+                          isLoading={isSendingThis}
+                          className="h-8 px-2.5 text-xs text-emerald-800 border-emerald-200 hover:bg-emerald-50 font-semibold"
+                          title="Send Firebase & Carrier SMS Reminder"
                         >
-                          Renew
+                          <Send className="w-3 h-3 mr-1 text-emerald-600" />
+                          Remind
                         </Button>
-                      </Link>
+
+                        <Link to={`/admin/payments?studentId=${sub.studentId}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-2.5 text-xs text-amber-800 border-amber-200 hover:bg-amber-50"
+                          >
+                            Renew
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   )
                 })

@@ -29,7 +29,7 @@ export const StudentProfilePage: React.FC = () => {
   const [step, setStep] = useState<'IDLE' | 'OTP_SENT' | 'SUCCESS'>('IDLE')
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
-  const [demoOtp, setDemoOtp] = useState<string | null>(null)
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null)
   const [resendCountdown, setResendCountdown] = useState(0)
 
   // Form fields
@@ -57,7 +57,7 @@ export const StudentProfilePage: React.FC = () => {
     setIsSendingOtp(true)
     try {
       const res = await otpService.sendOtp(mobileNumber, 'PASSWORD_CHANGE')
-      setDemoOtp(res.demoOtp)
+      setWhatsappUrl(res.whatsappUrl || null)
       setStep('OTP_SENT')
       setResendCountdown(45)
     } catch (err: any) {
@@ -100,7 +100,7 @@ export const StudentProfilePage: React.FC = () => {
       setEnteredOtp('')
       setNewPassword('')
       setConfirmPassword('')
-      setDemoOtp(null)
+      setWhatsappUrl(null)
     } catch (err: any) {
       setErrorMessage(err.message || 'OTP verification failed. Please try again.')
     } finally {
@@ -249,25 +249,30 @@ export const StudentProfilePage: React.FC = () => {
 
           {step === 'OTP_SENT' && (
             <form onSubmit={handleVerifyAndUpdatePassword} className="space-y-4">
-              {/* Demo Helper Banner */}
-              {demoOtp && (
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <div>
-                      <span className="font-bold">Firebase Simulated OTP:</span>{' '}
-                      <span className="font-mono font-bold text-amber-800">{demoOtp}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEnteredOtp(demoOtp)}
-                    className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-1 rounded-md transition-colors"
-                  >
-                    Auto-Fill OTP
-                  </button>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs space-y-1.5">
+                <div className="flex items-center gap-2 font-bold text-emerald-950">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Security OTP Sent to Mobile</span>
                 </div>
-              )}
+                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                  Google Firebase dispatched a 6-digit verification code to <strong>{maskedMobile}</strong>.
+                </p>
+                {whatsappUrl && (
+                  <div className="pt-1 border-t border-emerald-200/60">
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-white/80 border border-emerald-300 px-2.5 py-1 rounded-lg transition-colors"
+                    >
+                      <span>Receive OTP on WhatsApp 📲</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
+              <div id="recaptcha-container" />
 
               {/* OTP Input */}
               <div>

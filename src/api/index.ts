@@ -9,4 +9,5 @@ export * from './extensions'
 export * from './notifications'
 export * from './staff'
 export * from './feedback'
+export * from './reminders'
 

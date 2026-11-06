@@ -2,9 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import date, timedelta
+from django.utils import timezone
 import random
 
-from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification, FoodFeedback
+from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification, FoodFeedback, OTPVerification
 from .serializers import (
     UserAccountSerializer, StudentSerializer, PlanSerializer,
     SubscriptionSerializer, PaymentSerializer, LeaveRequestSerializer,
@@ -12,6 +13,9 @@ from .serializers import (
 )
 from .dates import calculate_last_date, inclusive_days, get_today_ist, get_subscription_status
 from .eligibility import check_leave_eligibility
+from .sms_service import send_otp_sms, send_renewal_reminder_sms, get_whatsapp_url
+from .firebase_service import notify_subscription_expiring, notify_payment_received
+
 
 class LoginView(APIView):
     def post(self, request):
@@ -619,4 +623,164 @@ class FoodFeedbackView(APIView):
             comments=comments
         )
         return Response(FoodFeedbackSerializer(feedback).data, status=status.HTTP_201_CREATED)
+
+class SendOtpView(APIView):
+    def post(self, request):
+        mobile = str(request.data.get('mobile', '')).strip()
+        purpose = request.data.get('purpose', 'Password Reset')
+
+        if not mobile or len(mobile) != 10 or not mobile.isdigit():
+            return Response({'detail': 'Please provide a valid 10-digit mobile number.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = UserAccount.objects.filter(mobile=mobile).first()
+        if not user:
+            return Response({'detail': 'No registered account found with this mobile number.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate 6-digit OTP
+        otp = f"{random.randint(100000, 999999)}"
+        expires_at = timezone.now() + timedelta(minutes=5)
+
+        # Invalidate old OTPs for this mobile
+        OTPVerification.objects.filter(mobile=mobile, is_verified=False).delete()
+
+        # Save new OTP
+        OTPVerification.objects.create(
+            id=f"otp-{random.randint(100000, 999999)}",
+            mobile=mobile,
+            otp=otp,
+            purpose=purpose,
+            expires_at=expires_at,
+            is_verified=False,
+            attempts=0
+        )
+
+        # Send via SMS service
+        sms_result = send_otp_sms(mobile, otp, purpose)
+
+        return Response({
+            'success': True,
+            'message': f"OTP sent successfully to +91 ******{mobile[-4:]}",
+            'mobile': mobile,
+            'whatsappUrl': sms_result.get('whatsappUrl'),
+            'expiresIn': 300
+        }, status=status.HTTP_200_OK)
+
+
+class VerifyOtpAndResetPasswordView(APIView):
+    def post(self, request):
+        mobile = str(request.data.get('mobile', '')).strip()
+        otp = str(request.data.get('otp', '')).strip()
+        new_password = str(request.data.get('newPassword', '')).strip()
+
+        if not mobile or not otp or not new_password:
+            return Response({'detail': 'Mobile, 6-digit OTP, and new password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 6:
+            return Response({'detail': 'New password must be at least 6 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = UserAccount.objects.filter(mobile=mobile).first()
+        if not user:
+            return Response({'detail': 'User account not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        record = OTPVerification.objects.filter(mobile=mobile, is_verified=False).order_by('-created_at').first()
+        if not record:
+            return Response({'detail': 'No active OTP found. Please request a new OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if timezone.now() > record.expires_at:
+            record.delete()
+            return Response({'detail': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if record.attempts >= 5:
+            record.delete()
+            return Response({'detail': 'Too many incorrect attempts. Please request a new OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if record.otp != otp:
+            record.attempts += 1
+            record.save()
+            return Response({'detail': f'Incorrect OTP. {5 - record.attempts} attempt(s) remaining.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # OTP is correct!
+        record.is_verified = True
+        record.save()
+
+        # Update user's password
+        user.password = new_password
+        user.save()
+
+        # Create security notification
+        Notification.objects.create(
+            id=f"notif-{random.randint(100000, 999999)}",
+            user_id=user.id,
+            title='Password Changed Successfully',
+            message='Your Hiremat Mess account password was recently changed via OTP verification.',
+            is_read=False
+        )
+
+        return Response({
+            'success': True,
+            'message': 'Password successfully reset! You can now log in with your new password.'
+        }, status=status.HTTP_200_OK)
+
+
+class SendReminderView(APIView):
+    def post(self, request):
+        student_id = request.data.get('studentId')
+        broadcast = request.data.get('broadcast', False)
+
+        targets = []
+        if broadcast:
+            # All active students with subscriptions expiring in <= 3 days or expired
+            students = Student.objects.filter(is_active=True)
+            for s in students:
+                sub = Subscription.objects.filter(student=s).order_by('-last_date').first()
+                if sub:
+                    days_left = (sub.last_date - date.today()).days
+                    if days_left <= 3:
+                        targets.append((s, sub, days_left))
+                else:
+                    # No sub
+                    targets.append((s, None, 0))
+        elif student_id:
+            s = Student.objects.filter(id=student_id).first()
+            if not s:
+                return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+            sub = Subscription.objects.filter(student=s).order_by('-last_date').first()
+            days_left = (sub.last_date - date.today()).days if sub else 0
+            targets.append((s, sub, days_left))
+        else:
+            return Response({'detail': 'Please provide studentId or broadcast=true.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        sent_records = []
+        for s, sub, days_left in targets:
+            last_date_str = sub.last_date.strftime('%d-%b-%Y') if sub else 'N/A'
+            sms_res = send_renewal_reminder_sms(s.mobile, s.name, days_left, last_date_str)
+
+            # In-app notification
+            Notification.objects.create(
+                id=f"notif-{random.randint(100000, 999999)}",
+                user_id=s.user_id,
+                title='Subscription Renewal Reminder' if days_left > 0 else 'Subscription Expired Notice',
+                message=sms_res.get('reminderText', f"Your mess plan expires on {last_date_str}. Renew via Direct UPI."),
+                type='WARNING' if days_left > 0 else 'ALERT',
+                is_read=False
+            )
+
+            # Trigger Firebase push
+            notify_subscription_expiring(s.name, max(0, days_left))
+
+            sent_records.append({
+                'studentId': s.id,
+                'name': s.name,
+                'mobile': s.mobile,
+                'daysLeft': days_left,
+                'whatsappUrl': sms_res.get('whatsappUrl'),
+                'reminderText': sms_res.get('reminderText')
+            })
+
+        return Response({
+            'success': True,
+            'message': f"Renewal reminders dispatched to {len(sent_records)} student(s).",
+            'reminders': sent_records
+        }, status=status.HTTP_200_OK)
+
 

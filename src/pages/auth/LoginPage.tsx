@@ -53,7 +53,7 @@ export const LoginPage: React.FC = () => {
   const [resetConfirmPassword, setResetConfirmPassword] = useState('')
   const [resetShowPassword, setResetShowPassword] = useState(false)
   const [resetStep, setResetStep] = useState<'ENTER_MOBILE' | 'ENTER_OTP' | 'SUCCESS'>('ENTER_MOBILE')
-  const [resetDemoOtp, setResetDemoOtp] = useState<string | null>(null)
+  const [resetWhatsappUrl, setResetWhatsappUrl] = useState<string | null>(null)
   const [resetError, setResetError] = useState<string | null>(null)
   const [resetLoading, setResetLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
@@ -122,7 +122,7 @@ export const LoginPage: React.FC = () => {
     setResetLoading(true)
     try {
       const res = await otpService.sendOtp(resetMobile, 'PASSWORD_RESET')
-      setResetDemoOtp(res.demoOtp)
+      setResetWhatsappUrl(res.whatsappUrl || null)
       setResetStep('ENTER_OTP')
       setCountdown(45)
     } catch (err: any) {
@@ -401,24 +401,30 @@ export const LoginPage: React.FC = () => {
               {/* Step 2: Enter OTP & New Password */}
               {resetStep === 'ENTER_OTP' && (
                 <form onSubmit={handleVerifyAndResetPassword} className="space-y-3.5">
-                  {resetDemoOtp && (
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                        <div>
-                          <span className="font-bold">Security OTP:</span>{' '}
-                          <span className="font-mono font-bold text-amber-800">{resetDemoOtp}</span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setResetOtp(resetDemoOtp)}
-                        className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded transition-colors"
-                      >
-                        Auto-Fill
-                      </button>
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs space-y-1.5">
+                    <div className="flex items-center gap-2 font-bold text-emerald-950">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>Verification Code Sent to Mobile!</span>
                     </div>
-                  )}
+                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                      We sent a 6-digit verification OTP to <strong>+91 ******{resetMobile.slice(-4)}</strong> via Firebase SMS.
+                    </p>
+                    {resetWhatsappUrl && (
+                      <div className="pt-1 border-t border-emerald-200/60">
+                        <a
+                          href={resetWhatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-white/80 border border-emerald-300 px-2.5 py-1 rounded-lg transition-colors"
+                        >
+                          <span>Receive OTP on WhatsApp 📲</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
+                  <div id="recaptcha-container" />
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">

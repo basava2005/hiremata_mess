@@ -6,13 +6,17 @@ from .views import (
     LeavesView, LeaveStatusUpdateView, ExtensionsView,
     EligibleExtensionsView, ReviewExtensionView, NotificationsView,
     RazorpayCreateOrderView, RazorpayVerifyPaymentView, FirebaseRegisterTokenView,
-    StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView, FoodFeedbackView
+    StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView, FoodFeedbackView,
+    SendOtpView, VerifyOtpAndResetPasswordView, SendReminderView
 )
 
 urlpatterns = [
     path('auth/login', LoginView.as_view(), name='login'),
     path('auth/me', CurrentUserView.as_view(), name='current_user'),
     path('auth/password/change', PasswordChangeView.as_view(), name='password_change'),
+    path('auth/otp/send', SendOtpView.as_view(), name='send_otp'),
+    path('auth/otp/verify-reset', VerifyOtpAndResetPasswordView.as_view(), name='verify_otp_reset'),
+    path('reminders/send', SendReminderView.as_view(), name='send_reminders'),
 
     path('students', StudentsView.as_view(), name='students_list_create'),
     path('students/<str:pk>', StudentDetailView.as_view(), name='student_detail'),
