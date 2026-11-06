@@ -12,6 +12,12 @@ node_modules
 dist
 dist-ssr
 
+# Environment Variables (Keep local secrets safe)
+.env
+.env.local
+.env.*.local
+!.env.example
+
 # Python artifacts
 __pycache__/
 *.py[cod]

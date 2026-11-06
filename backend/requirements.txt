@@ -7,9 +7,11 @@ django-cors-headers>=4.3.0
 razorpay>=1.4.0
 python-dotenv>=1.0.0
 requests>=2.31.0
+pytz>=2024.1
 
 # Database Connectors
-# Default: SQLite (built-in with Python)
-# Optional: Oracle Database 19c / 21c / 23ai
-oracledb>=2.0.0
+# Cloud PostgreSQL (Neon.tech, Supabase, Render, Aiven)
+psycopg2-binary>=2.9.9
 
+# Oracle Database 19c / 21c / 23ai / Cloud ATP
+oracledb>=2.0.0

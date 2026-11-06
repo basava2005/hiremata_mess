@@ -1,9 +1,14 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-messpro-secret-key-15803d-super-secure'
+# Load environment variables from root .env or backend .env
+load_dotenv(BASE_DIR.parent / '.env')
+load_dotenv(BASE_DIR / '.env')
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-messpro-secret-key-15803d-super-secure')
 
 DEBUG = True
 
@@ -55,7 +60,7 @@ WSGI_APPLICATION = 'messpro_backend.wsgi.application'
 
 # Database Configuration (Supports Oracle Cloud / Local, Free Cloud PostgreSQL/MySQL, & SQLite)
 USE_ORACLE = os.environ.get('USE_ORACLE', 'False').lower() in ('true', '1', 'yes')
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 
 if USE_ORACLE:
     try:
@@ -114,11 +119,12 @@ elif DATABASE_URL:
         }
     }
 else:
-    # Default local development database
+    # Default SQLite database (supports custom persistent volume path on cloud hosting)
+    sqlite_custom_path = os.environ.get('SQLITE_PATH')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': Path(sqlite_custom_path).resolve() if sqlite_custom_path else BASE_DIR / 'db.sqlite3',
         }
     }
 
