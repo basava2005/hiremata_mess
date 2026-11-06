@@ -8,7 +8,7 @@ Django REST framework backend for **MessPro** — built for **Hiremat Mess (ಹ�
 
 - **Authentication & RBAC**: JWT/Session token login with 10-digit mobile number and role-based guards (`BRANCH_ADMIN`, `MESS_STAFF`, `STUDENT`).
 - **Student Management**: Admin student provisioning with custom username, auto-generated secure passwords, and deactivation safeguards.
-- **Single Standard Plan**: ₹3,500 / 30 calendar days (Unlimited Homestyle Meals + Tea + Sunday Bele Holige feast).
+- **Single Standard Plan**: ₹3,500 / 30 calendar days (Unlimited Homestyle Meals + Tea + Bele Holige feast).
 - **Subscriptions & 30-Day Rules**: Auto-computed `last_included_date = start + 29 days`, expiring-soon detection (≤ 3 days left).
 - **10-Day Leave Extension Policy**: Merges continuous approved leave ranges (≥ 10 consecutive approved days inside subscription period) with admin extension review drawer.
 - **Razorpay Payment Gateway**: Order generation, HMAC SHA256 payment signature verification, and instant subscription renewal.

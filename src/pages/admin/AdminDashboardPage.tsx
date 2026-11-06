@@ -16,6 +16,7 @@ import {
   BellRing,
   Send,
   CheckCircle2,
+  MessageSquare,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
@@ -31,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { StatusBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { CardSkeleton, TableSkeleton } from '../../components/ui/Skeleton'
+import { BulkWaReminderModal } from '../../components/admin/BulkWaReminderModal'
 
 export const AdminDashboardPage: React.FC = () => {
   // 1. Fetch Students
@@ -85,6 +87,7 @@ export const AdminDashboardPage: React.FC = () => {
   const eligibleExtensionCount = eligibleStudents.length
 
   // Reminder state & handlers
+  const [isBulkWaOpen, setIsBulkWaOpen] = useState(false)
   const [sendingReminderStudentId, setSendingReminderStudentId] = useState<string | null>(null)
   const [isBroadcasting, setIsBroadcasting] = useState(false)
 
@@ -200,7 +203,15 @@ export const AdminDashboardPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            onClick={() => setIsBulkWaOpen(true)}
+            className="bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+          >
+            <MessageSquare className="w-3.5 h-3.5 fill-white" />
+            <span>Bulk WhatsApp Reminders</span>
+          </Button>
           <Link to="/admin/students">
             <Button size="sm" className="bg-[#15803d] hover:bg-[#166534] text-xs">
               <Users className="w-3.5 h-3.5 mr-1.5" />
@@ -262,6 +273,14 @@ export const AdminDashboardPage: React.FC = () => {
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                   {expiringSoonSubs.length} Students
                 </span>
+                <Button
+                  size="sm"
+                  onClick={() => setIsBulkWaOpen(true)}
+                  className="h-8 text-xs font-bold bg-[#25D366] hover:bg-[#20ba5a] text-white shadow-xs rounded-lg flex items-center gap-1.5"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 fill-white" />
+                  <span>Bulk WhatsApp</span>
+                </Button>
                 {expiringSoonSubs.length > 0 && (
                   <Button
                     size="sm"
@@ -312,6 +331,21 @@ export const AdminDashboardPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {student?.mobile && (
+                          <a
+                            href={`https://api.whatsapp.com/send?phone=91${student.mobile.replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
+                              `ನಮಸ್ಕಾರ ${student.name},\nYour Hiremat Mess Davangere subscription expires in *${daysLeft} days* (on ${formatDate(sub.lastDate)}).\n\nPlease renew via Direct UPI to *hirematmess@upi* (₹3,500 / 30 Days) to ensure uninterrupted hot meals.\n\n📍 BIET Road, Davangere\n📞 Contact Admin Ramesh Sharma: 9876543210`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-8 px-2.5 text-xs text-white bg-[#25D366] hover:bg-[#20ba5a] rounded-lg font-bold inline-flex items-center gap-1 shadow-xs transition-transform active:scale-95"
+                            title="Send WhatsApp Renewal Reminder"
+                          >
+                            <MessageSquare className="w-3 h-3 fill-white" />
+                            <span className="hidden sm:inline">WhatsApp</span>
+                          </a>
+                        )}
+
                         <Button
                           size="sm"
                           variant="outline"
@@ -454,6 +488,14 @@ export const AdminDashboardPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Bulk WhatsApp Reminder Modal */}
+      <BulkWaReminderModal
+        open={isBulkWaOpen}
+        onClose={() => setIsBulkWaOpen(false)}
+        students={students}
+        subscriptions={subscriptions}
+      />
     </div>
   )
 }

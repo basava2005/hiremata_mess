@@ -475,9 +475,17 @@ class PasswordChangeView(APIView):
     def post(self, request):
         mobile = str(request.data.get('mobile', '')).strip()
         new_password = str(request.data.get('newPassword', '')).strip()
+        
+        if not mobile and hasattr(request, 'user') and request.user and getattr(request.user, 'is_authenticated', False):
+            mobile = getattr(request.user, 'mobile', '')
+
+        if not new_password or len(new_password) < 6:
+            return Response({'detail': 'New password must be at least 6 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
         user = UserAccount.objects.filter(mobile=mobile).first()
         if not user:
-            return Response({'detail': 'User with this mobile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'User with registered mobile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
         user.password = new_password
         user.save()
         return Response({'success': True, 'message': 'Password updated successfully!'}, status=status.HTTP_200_OK)

@@ -10,7 +10,7 @@ export const mockPlan: Plan = {
   price: 3500,
   durationDays: 30,
   mealsLabel: 'Breakfast + Tea + Chapati Meals + Chapati Dinner',
-  description: '100% Pure Veg Karnataka homestyle meals: Morning Mandakki Mirchi/Normal Dosa & Tea, Homestyle Chapati Meals, and Chapati Dinner with Sunday Holige Feast.',
+  description: '100% Pure Veg Karnataka homestyle meals: Morning Mandakki Mirchi/Normal Dosa & Tea, Homestyle Chapati Meals, and Chapati Dinner with Holige Feast.',
   isActive: true,
 }
 

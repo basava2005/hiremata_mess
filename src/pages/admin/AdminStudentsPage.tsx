@@ -27,6 +27,7 @@ import {
   Shield,
   Send,
   Bell,
+  MessageSquare,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { studentsApi } from '../../api/students'
@@ -42,6 +43,7 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { TableSkeleton } from '../../components/ui/Skeleton'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { BulkWaReminderModal } from '../../components/admin/BulkWaReminderModal'
 
 export const AdminStudentsPage: React.FC = () => {
   const queryClient = useQueryClient()
@@ -51,6 +53,7 @@ export const AdminStudentsPage: React.FC = () => {
   const pageSize = 8
 
   // Modal states
+  const [isBulkWaOpen, setIsBulkWaOpen] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null)
@@ -307,7 +310,16 @@ export const AdminStudentsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            onClick={() => setIsBulkWaOpen(true)}
+            className="bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs h-9 font-bold shadow-xs flex items-center gap-1.5"
+          >
+            <MessageSquare className="w-3.5 h-3.5 fill-white" />
+            <span>Bulk WhatsApp</span>
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -458,6 +470,20 @@ export const AdminStudentsPage: React.FC = () => {
 
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {student.mobile && (
+                            <a
+                              href={`https://api.whatsapp.com/send?phone=91${student.mobile.replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
+                                `ನಮಸ್ಕಾರ ${student.name},\nThis is Hiremat Mess Davangere (BIET Road).\nYour registered account mobile is +91 ${student.mobile}.\n\n📍 BIET Rd, Davangere\n📞 Contact Admin Ramesh Sharma: 9876543210`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Chat / Send WhatsApp to Student"
+                              className="p-1.5 rounded-lg text-[#25D366] hover:bg-emerald-50 transition-colors"
+                            >
+                              <MessageSquare className="w-4 h-4 fill-current" />
+                            </a>
+                          )}
+
                           <button
                             onClick={() => handleSendReminder(student)}
                             disabled={remindingStudentId === student.id}
@@ -937,6 +963,14 @@ export const AdminStudentsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Bulk WhatsApp Reminder Modal */}
+      <BulkWaReminderModal
+        open={isBulkWaOpen}
+        onClose={() => setIsBulkWaOpen(false)}
+        students={students}
+        subscriptions={subscriptions}
+      />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import json
 import logging
 import urllib.request
 import urllib.parse
+import urllib.error
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -88,9 +89,13 @@ def send_sms(mobile: str, message: str, otp_code: str = None) -> dict:
                 print(f"Status: {res_data.get('message', res_data)}")
                 print(f"==========================================\n")
                 return {'success': True, 'gateway': 'Fast2SMS', 'data': res_data}
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8')
+            logger.error(f"Fast2SMS HTTP {e.code}: {error_body}")
+            print(f"\n[Fast2SMS HTTP Error {e.code}]: {error_body}\n")
         except Exception as e:
             logger.error(f"Fast2SMS delivery error: {e}")
-            print(f"[Fast2SMS Delivery Error]: {e}")
+            print(f"\n[Fast2SMS Delivery Error]: {e}\n")
 
 
     # 2. Try Twilio

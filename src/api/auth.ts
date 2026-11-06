@@ -80,9 +80,23 @@ export const authApi = {
     if (USE_MOCKS) {
       return mockDelay({ success: true, message: 'Password updated successfully' })
     }
-    const res = await apiClient.post('/auth/change-password', {
-      oldPassword: _oldPass,
+    const res = await apiClient.post('/auth/password/change', {
       newPassword: _newPass,
+    })
+    return res.data
+  },
+
+  resetPassword: async (mobile: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+    if (USE_MOCKS) {
+      const raw = sessionStorage.getItem('messpro_passwords') || '{}'
+      const registry = JSON.parse(raw)
+      registry[mobile] = newPassword
+      sessionStorage.setItem('messpro_passwords', JSON.stringify(registry))
+      return mockDelay({ success: true, message: 'Password reset successfully!' })
+    }
+    const res = await apiClient.post('/auth/password/change', {
+      mobile,
+      newPassword,
     })
     return res.data
   },

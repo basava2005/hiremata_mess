@@ -20,11 +20,13 @@ import {
   EyeOff,
   MapPin,
   Building2,
+  MessageSquare,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { Card, CardContent } from '../../components/ui/Card'
-import { otpService } from '../../lib/otp'
+import { authApi } from '../../api/auth'
+import { toast } from 'sonner'
 
 const loginSchema = z.object({
   mobile: z
@@ -45,26 +47,15 @@ export const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Forgot password OTP modal states
+  // Forgot password modal states (No OTP required)
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false)
   const [resetMobile, setResetMobile] = useState('')
-  const [resetOtp, setResetOtp] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [resetConfirmPassword, setResetConfirmPassword] = useState('')
   const [resetShowPassword, setResetShowPassword] = useState(false)
-  const [resetStep, setResetStep] = useState<'ENTER_MOBILE' | 'ENTER_OTP' | 'SUCCESS'>('ENTER_MOBILE')
-  const [resetWhatsappUrl, setResetWhatsappUrl] = useState<string | null>(null)
+  const [resetIsSuccess, setResetIsSuccess] = useState(false)
   const [resetError, setResetError] = useState<string | null>(null)
   const [resetLoading, setResetLoading] = useState(false)
-  const [countdown, setCountdown] = useState(0)
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout
-    if (countdown > 0) {
-      timer = setTimeout(() => setCountdown((c) => c - 1), 1000)
-    }
-    return () => clearTimeout(timer)
-  }, [countdown])
 
   const {
     register,
@@ -109,36 +100,13 @@ export const LoginPage: React.FC = () => {
     }
   }
 
-  // Handle Send Reset OTP
-  const handleSendResetOtp = async (e: React.FormEvent) => {
+  // Handle Direct Password Reset (No OTP required)
+  const handleDirectPasswordReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setResetError(null)
 
     if (!resetMobile || resetMobile.length !== 10 || !/^\d{10}$/.test(resetMobile)) {
       setResetError('Please enter a valid 10-digit registered mobile number.')
-      return
-    }
-
-    setResetLoading(true)
-    try {
-      const res = await otpService.sendOtp(resetMobile, 'PASSWORD_RESET')
-      setResetWhatsappUrl(res.whatsappUrl || null)
-      setResetStep('ENTER_OTP')
-      setCountdown(45)
-    } catch (err: any) {
-      setResetError(err.message || 'Failed to send verification OTP.')
-    } finally {
-      setResetLoading(false)
-    }
-  }
-
-  // Handle Verify & Reset Password
-  const handleVerifyAndResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setResetError(null)
-
-    if (!resetOtp || resetOtp.length !== 6) {
-      setResetError('Please enter the 6-digit OTP received on your mobile.')
       return
     }
 
@@ -148,18 +116,21 @@ export const LoginPage: React.FC = () => {
     }
 
     if (resetNewPassword !== resetConfirmPassword) {
-      setResetError('Passwords do not match.')
+      setResetError('Passwords do not match. Please re-enter.')
       return
     }
 
     setResetLoading(true)
     try {
-      await otpService.updatePasswordWithOtp(resetMobile, resetOtp, resetNewPassword)
-      setResetStep('SUCCESS')
+      await authApi.resetPassword(resetMobile, resetNewPassword)
+      setResetIsSuccess(true)
       setValue('mobile', resetMobile)
       setValue('password', resetNewPassword)
+      toast.success('Password updated successfully!')
     } catch (err: any) {
-      setResetError(err.message || 'OTP verification or password reset failed.')
+      setResetError(
+        err.response?.data?.detail || err.message || 'Failed to update password. Please check your registered mobile number.'
+      )
     } finally {
       setResetLoading(false)
     }
@@ -247,16 +218,15 @@ export const LoginPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setResetMobile('')
-                      setResetOtp('')
                       setResetNewPassword('')
                       setResetConfirmPassword('')
                       setResetError(null)
-                      setResetStep('ENTER_MOBILE')
+                      setResetIsSuccess(false)
                       setIsForgotModalOpen(true)
                     }}
                     className="text-xs font-bold text-[#15803d] hover:text-[#166534] hover:underline transition-colors"
                   >
-                    Forgot Password? (Reset via OTP)
+                    Forgot Password? (ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರುವಿರಾ?)
                   </button>
                 </div>
                 <div className="relative">
@@ -328,13 +298,17 @@ export const LoginPage: React.FC = () => {
                   <KeyRound className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-white">Reset Password via OTP</h3>
-                  <p className="text-[11px] text-emerald-300">Hiremat Mess Student Account Verification</p>
+                  <h3 className="font-bold text-sm text-white">Reset Account Password</h3>
+                  <p className="text-[11px] text-emerald-300">Hiremat Mess Student Account • Davangere</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsForgotModalOpen(false)}
+                onClick={() => {
+                  setIsForgotModalOpen(false)
+                  setResetIsSuccess(false)
+                  setResetError(null)
+                }}
                 className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -343,9 +317,6 @@ export const LoginPage: React.FC = () => {
 
             {/* Modal Body */}
             <div className="p-5">
-              {/* Invisible reCAPTCHA container for Google Firebase Phone Auth */}
-              <div id="recaptcha-container" />
-
               {resetError && (
                 <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -353,16 +324,18 @@ export const LoginPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Step 1: Enter Mobile */}
-              {resetStep === 'ENTER_MOBILE' && (
-                <form onSubmit={handleSendResetOtp} className="space-y-4">
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Enter the 10-digit mobile number registered by your Mess Administrator. We'll send a 6-digit OTP code to verify your identity.
-                  </p>
+              {!resetIsSuccess ? (
+                <form onSubmit={handleDirectPasswordReset} className="space-y-4">
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs">
+                    <p className="font-semibold text-emerald-900">Direct Password Reset (No OTP needed)</p>
+                    <p className="text-[11px] text-emerald-800 mt-0.5">
+                      Enter your 10-digit mobile number registered with the mess to create your new password.
+                    </p>
+                  </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Registered Mobile Number
+                      Registered 10-Digit Mobile Number
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -374,11 +347,46 @@ export const LoginPage: React.FC = () => {
                         maxLength={10}
                         value={resetMobile}
                         onChange={(e) => setResetMobile(e.target.value.replace(/\D/g, ''))}
-                        placeholder="9876543210"
+                        placeholder="e.g. 9353198281"
                         className="block w-full pl-14 pr-3 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-colors"
                         autoFocus
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      New Password (min 6 characters)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={resetShowPassword ? 'text' : 'password'}
+                        value={resetNewPassword}
+                        onChange={(e) => setResetNewPassword(e.target.value)}
+                        placeholder="Create strong password"
+                        className="w-full text-xs p-2.5 pr-10 rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setResetShowPassword(!resetShowPassword)}
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                      >
+                        {resetShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type={resetShowPassword ? 'text' : 'password'}
+                      value={resetConfirmPassword}
+                      onChange={(e) => setResetConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-all"
+                    />
                   </div>
 
                   <div className="flex items-center gap-2 pt-2">
@@ -395,121 +403,24 @@ export const LoginPage: React.FC = () => {
                       isLoading={resetLoading}
                       className="w-2/3 text-xs h-10 font-bold bg-[#15803d] hover:bg-[#166534] rounded-xl"
                     >
-                      Send Verification OTP
+                      Update Password
                     </Button>
                   </div>
-                </form>
-              )}
 
-              {/* Step 2: Enter OTP & New Password */}
-              {resetStep === 'ENTER_OTP' && (
-                <form onSubmit={handleVerifyAndResetPassword} className="space-y-3.5">
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs space-y-2">
-                    <div className="flex items-center gap-2 font-bold text-emerald-950">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>Verification Code Ready!</span>
-                    </div>
-                    <p className="text-[11px] text-emerald-800 leading-relaxed">
-                      OTP generated for <strong>+91 ******{resetMobile.slice(-4)}</strong>. You can receive it directly on WhatsApp, check your dev server terminal, or enter the code below.
-                    </p>
-                    {resetWhatsappUrl && (
-                      <div className="pt-1">
-                        <a
-                          href={resetWhatsappUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba5a] py-2 px-3 rounded-xl shadow-xs transition-transform active:scale-98"
-                        >
-                          <span>Send / Open OTP on WhatsApp (+91 {resetMobile}) 📲</span>
-                        </a>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Enter 6-Digit OTP
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={resetOtp}
-                      onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
-                      placeholder="e.g. 123456"
-                      className="w-full text-center font-mono tracking-widest text-lg font-bold p-2 rounded-xl border border-slate-300 focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-colors"
-                      autoFocus
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      New Password (min 6 characters)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={resetShowPassword ? 'text' : 'password'}
-                        value={resetNewPassword}
-                        onChange={(e) => setResetNewPassword(e.target.value)}
-                        placeholder="Create strong password"
-                        className="w-full text-xs p-2.5 pr-10 rounded-xl border border-slate-300 focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setResetShowPassword(!resetShowPassword)}
-                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-                      >
-                        {resetShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Confirm New Password
-                    </label>
-                    <input
-                      type={resetShowPassword ? 'text' : 'password'}
-                      value={resetConfirmPassword}
-                      onChange={(e) => setResetConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                      className="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20"
-                    />
-                  </div>
-
-                  <div className="pt-2 space-y-2">
-                    <Button
-                      type="submit"
-                      isLoading={resetLoading}
-                      className="w-full text-xs h-10 font-bold bg-[#15803d] hover:bg-[#166534] rounded-xl"
+                  {/* WhatsApp Admin Support Button */}
+                  <div className="pt-2 border-t border-slate-100 text-center">
+                    <a
+                      href="https://api.whatsapp.com/send?phone=919876543210&text=Hello%20Ramesh%20Sir%2C%20I%20am%20a%20student%20at%20Hiremat%20Mess%20Davangere%20and%20need%20help%20with%20my%20account%20password."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 text-[11px] text-[#25D366] hover:underline font-semibold"
                     >
-                      Verify OTP & Reset Password
-                    </Button>
-
-                    <div className="flex items-center justify-between text-xs pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setResetStep('ENTER_MOBILE')}
-                        className="text-slate-500 hover:text-slate-700 underline text-[11px]"
-                      >
-                        Change Mobile
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={countdown > 0 || resetLoading}
-                        onClick={handleSendResetOtp}
-                        className="text-[#15803d] hover:text-[#166534] font-semibold flex items-center gap-1 disabled:opacity-50 text-[11px]"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${resetLoading ? 'animate-spin' : ''}`} />
-                        <span>{countdown > 0 ? `Resend OTP (${countdown}s)` : 'Resend OTP'}</span>
-                      </button>
-                    </div>
+                      <MessageSquare className="w-3.5 h-3.5 fill-current" />
+                      <span>Need Help? Chat with Admin Ramesh Sharma on WhatsApp 📲</span>
+                    </a>
                   </div>
                 </form>
-              )}
-
-              {/* Step 3: Success */}
-              {resetStep === 'SUCCESS' && (
+              ) : (
                 <div className="text-center py-4 space-y-3">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803d] flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-7 h-7" />
@@ -517,7 +428,7 @@ export const LoginPage: React.FC = () => {
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">Password Reset Successfully!</h4>
                     <p className="text-xs text-slate-500 mt-1">
-                      Your new password is now active. You can sign in to your student dashboard.
+                      Your new password is now active for mobile <strong>+91 {resetMobile}</strong>.
                     </p>
                   </div>
                   <Button

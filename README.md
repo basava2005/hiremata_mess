@@ -21,7 +21,7 @@
   - **Daily Breakfast + Tea (7:30 AM – 10:00 AM)**: Davangere Mandakki Mirchi (ಮಂಡಕ್ಕಿ ಮಿರ್ಚಿ), Homestyle Dosa, Crispy Paddu, Vegetable Pulao, Avalakki, Puliyogare, and Hot Kadak Chai.
   - **Lunch (12:30 PM – 2:30 PM)**: Unlimited Hot Whole-Wheat Chapati Meals, Yennegai Badane / Kaalu Palya, Kat Saaru, Sona Masoori Rice, and Majjige.
   - **Dinner (7:30 PM – 9:30 PM)**: Fresh Whole-Wheat Chapatis, Night Seasonal Curry, Dal Tadka, and Steamed Rice.
-  - **Sunday Special**: Fresh Bele Holige (Obbattu) feast served with pure desi ghee and payasa.
+  - **Special Feast**: Fresh Bele Holige (Obbattu) feast served with pure desi ghee and payasa.
 - **Single Standard Plan**: **₹3,500 / 30 calendar days** (Unlimited Homestyle Meals + Breakfast & Tea).
 
 ---
