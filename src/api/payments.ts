@@ -57,6 +57,32 @@ export const paymentsApi = {
     return res.data
   },
 
+  // Student direct UPI payment (Zero 2% Gateway Fee & Zero GST)
+  submitUpiPayment: async (payload: {
+    studentId: string
+    amount: number
+    utrNumber: string
+    upiApp?: string
+    notes?: string
+  }): Promise<Payment> => {
+    if (USE_MOCKS) {
+      const today = new Date().toISOString().split('T')[0]
+      const payment = mockDB.createPayment({
+        studentId: payload.studentId,
+        amount: payload.amount,
+        paymentMethod: 'UPI',
+        referenceNumber: payload.utrNumber,
+        status: 'SUCCESS',
+        date: today,
+        notes: `Direct UPI (${payload.upiApp || 'UPI'}) • UTR: ${payload.utrNumber}`,
+      })
+      return mockDelay(payment, 400)
+    }
+
+    const res = await apiClient.post<Payment>('/payments/upi/submit', payload)
+    return res.data
+  },
+
   // Student mock online gateway payment
   initiateOnlinePayment: async (studentId: string, amount: number, outcome: PaymentStatus = 'SUCCESS'): Promise<Payment> => {
     if (USE_MOCKS) {
@@ -77,4 +103,3 @@ export const paymentsApi = {
     return res.data
   },
 }
-

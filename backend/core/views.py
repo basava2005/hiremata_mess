@@ -15,12 +15,15 @@ from .eligibility import check_leave_eligibility
 
 class LoginView(APIView):
     def post(self, request):
-        mobile = request.data.get('mobile')
-        password = request.data.get('password')
+        mobile = str(request.data.get('mobile', '')).strip()
+        password = str(request.data.get('password', '')).strip()
 
         user = UserAccount.objects.filter(mobile=mobile).first()
         if not user:
-            return Response({'detail': 'User with this mobile number does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'No registered account found with this mobile number.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.password != password:
+            return Response({'detail': 'Incorrect password. Please verify or use Forgot Password to reset via OTP.'}, status=status.HTTP_400_BAD_REQUEST)
 
         student = None
         if user.student_id:
@@ -72,8 +75,12 @@ class StudentsView(APIView):
 
     def post(self, request):
         name = request.data.get('name')
-        mobile = request.data.get('mobile')
-        address = request.data.get('address')
+        mobile = str(request.data.get('mobile', '')).strip()
+        address = request.data.get('address', '')
+        initial_password = str(request.data.get('initialPassword') or request.data.get('password') or 'password123').strip()
+
+        if UserAccount.objects.filter(mobile=mobile).exists():
+            return Response({'detail': 'A student or user with this mobile number already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
         new_id = f"stud-{int(date.today().strftime('%m%d%H%M'))}-{random.randint(100, 999)}"
         user_id = f"user-{new_id}"
@@ -81,14 +88,17 @@ class StudentsView(APIView):
         # Create linked user
         user = UserAccount.objects.create(
             id=user_id,
+            branch_id='branch-main-01',
             mobile=mobile,
             name=name,
             role='STUDENT',
+            password=initial_password,
             student_id=new_id
         )
 
         student = Student.objects.create(
             id=new_id,
+            branch_id='branch-main-01',
             user_id=user_id,
             name=name,
             mobile=mobile,
@@ -456,3 +466,121 @@ class FirebaseRegisterTokenView(APIView):
         user_id = request.data.get('userId')
         fcm_token = request.data.get('fcmToken')
         return Response({'success': True, 'userId': user_id, 'status': 'registered'}, status=status.HTTP_200_OK)
+
+class PasswordChangeView(APIView):
+    def post(self, request):
+        mobile = str(request.data.get('mobile', '')).strip()
+        new_password = str(request.data.get('newPassword', '')).strip()
+        user = UserAccount.objects.filter(mobile=mobile).first()
+        if not user:
+            return Response({'detail': 'User with this mobile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        user.password = new_password
+        user.save()
+        return Response({'success': True, 'message': 'Password updated successfully!'}, status=status.HTTP_200_OK)
+
+class StaffView(APIView):
+    def get(self, request):
+        staff_members = UserAccount.objects.filter(role='MESS_STAFF').order_by('-created_at')
+        return Response(UserAccountSerializer(staff_members, many=True).data)
+
+    def post(self, request):
+        name = request.data.get('name', '').strip()
+        mobile = str(request.data.get('mobile', '')).strip()
+        password = str(request.data.get('password', 'staff123')).strip()
+
+        if not name or not mobile:
+            return Response({'detail': 'Staff name and 10-digit mobile number are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if UserAccount.objects.filter(mobile=mobile).exists():
+            return Response({'detail': 'A staff member or user with this mobile already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_id = f"staff-{random.randint(100, 999)}"
+        staff = UserAccount.objects.create(
+            id=new_id,
+            branch_id='branch-main-01',
+            mobile=mobile,
+            name=name,
+            role='MESS_STAFF',
+            password=password
+        )
+        return Response(UserAccountSerializer(staff).data, status=status.HTTP_201_CREATED)
+
+class StaffDetailView(APIView):
+    def delete(self, request, pk):
+        staff = UserAccount.objects.filter(id=pk, role='MESS_STAFF').first()
+        if not staff:
+            return Response({'detail': 'Staff member not found.'}, status=status.HTTP_404_NOT_FOUND)
+        staff.delete()
+        return Response({'success': True, 'message': 'Staff member removed.'}, status=status.HTTP_200_OK)
+
+class UpiPaymentSubmitView(APIView):
+    def post(self, request):
+        student_id = request.data.get('studentId')
+        amount = int(request.data.get('amount', 3500))
+        utr_number = str(request.data.get('utrNumber') or request.data.get('referenceNumber', '')).strip()
+        upi_app = request.data.get('upiApp', 'Direct UPI')
+        notes = request.data.get('notes', f'Direct UPI Transfer via {upi_app}')
+
+        if not utr_number or len(utr_number) < 6:
+            return Response({'detail': 'Please enter a valid 12-digit UPI UTR / Transaction Reference number.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        student = Student.objects.filter(id=student_id).first()
+        if not student:
+            return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prevent duplicate submissions of same UTR
+        if Payment.objects.filter(reference_number=utr_number).exists():
+            return Response({'detail': f'UPI reference {utr_number} has already been registered.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        receipt_number = f"RCP-{date.today().year}{date.today().month:02d}-{random.randint(1000, 9999)}"
+        new_pay_id = f"pay-upi-{random.randint(100000, 999999)}"
+
+        payment = Payment.objects.create(
+            id=new_pay_id,
+            student=student,
+            amount=amount,
+            payment_method='UPI',
+            reference_number=utr_number,
+            status='SUCCESS',
+            date=date.today(),
+            receipt_number=receipt_number,
+            notes=f"{notes} • UTR: {utr_number}"
+        )
+
+        # Activate or extend 30-day subscription
+        plan = Plan.objects.first()
+        if not plan:
+            plan = Plan.objects.create(
+                id='plan-standard-30',
+                name='Standard Monthly Plan (Pure Veg)',
+                price=3500,
+                duration_days=30
+            )
+
+        start_d = date.today()
+        current_sub = Subscription.objects.filter(student=student, status='ACTIVE').order_by('-last_date').first()
+        if current_sub and current_sub.last_date >= date.today():
+            start_d = current_sub.last_date + timedelta(days=1)
+
+        last_d = calculate_last_date(start_d, plan.duration_days)
+        new_sub = Subscription.objects.create(
+            id=f"sub-{random.randint(100000, 999999)}",
+            student=student,
+            plan=plan,
+            start_date=start_d,
+            last_date=last_d,
+            status=get_subscription_status(start_d, last_d)
+        )
+        student.current_subscription_id = new_sub.id
+        student.save()
+
+        # In-app notification
+        Notification.objects.create(
+            id=f"notif-{random.randint(100000, 999999)}",
+            user_id=student.user_id,
+            title='Direct UPI Payment Received (Rs. 3,500)',
+            message=f"Subscription activated till {last_d.strftime('%d-%b-%Y')}. Receipt: {receipt_number}",
+            is_read=False
+        )
+
+        return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)

@@ -28,7 +28,7 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { CardSkeleton } from '../../components/ui/Skeleton'
 import { Link } from 'react-router-dom'
-import { RazorpayGatewayModal } from '../../components/payments/RazorpayGatewayModal'
+import { DirectUpiPaymentModal } from '../../components/payments/DirectUpiPaymentModal'
 
 export const StudentHomePage: React.FC = () => {
   const { user, student } = useAuth()
@@ -420,25 +420,19 @@ export const StudentHomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Official Razorpay Gateway Modal for Renewal */}
-      <RazorpayGatewayModal
+      {/* Direct UPI Payment Modal for Renewal (0% Gateway Fee, 0% GST) */}
+      <DirectUpiPaymentModal
         open={isRenewModalOpen}
         onClose={() => setIsRenewModalOpen(false)}
         amount={3500}
         studentId={studentId}
         studentName={student?.name || user?.name || 'Student'}
         studentMobile={student?.mobile || user?.mobile || '9876543201'}
-        onPaymentSuccess={async (details) => {
-          setIsRenewing(true)
-          try {
-            await paymentsApi.initiateOnlinePayment(studentId, 3500, 'SUCCESS')
-            queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
-            queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
-            queryClient.invalidateQueries({ queryKey: ['studentNotifications', studentId] })
-            setIsRenewModalOpen(false)
-          } finally {
-            setIsRenewing(false)
-          }
+        onPaymentSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
+          queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
+          queryClient.invalidateQueries({ queryKey: ['studentNotifications', studentId] })
+          setIsRenewModalOpen(false)
         }}
       />
     </div>

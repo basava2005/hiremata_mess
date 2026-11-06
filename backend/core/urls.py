@@ -5,17 +5,22 @@ from .views import (
     SubscriptionsView, StudentSubscriptionView, PaymentsView,
     LeavesView, LeaveStatusUpdateView, ExtensionsView,
     EligibleExtensionsView, ReviewExtensionView, NotificationsView,
-    RazorpayCreateOrderView, RazorpayVerifyPaymentView, FirebaseRegisterTokenView
+    RazorpayCreateOrderView, RazorpayVerifyPaymentView, FirebaseRegisterTokenView,
+    StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView
 )
 
 urlpatterns = [
     path('auth/login', LoginView.as_view(), name='login'),
     path('auth/me', CurrentUserView.as_view(), name='current_user'),
+    path('auth/password/change', PasswordChangeView.as_view(), name='password_change'),
 
     path('students', StudentsView.as_view(), name='students_list_create'),
     path('students/<str:pk>', StudentDetailView.as_view(), name='student_detail'),
     path('students/<str:pk>/deactivate', StudentDeactivateView.as_view(), name='student_deactivate'),
     path('students/<str:pk>/activate', StudentActivateView.as_view(), name='student_activate'),
+
+    path('staff', StaffView.as_view(), name='staff_list_create'),
+    path('staff/<str:pk>', StaffDetailView.as_view(), name='staff_detail'),
 
     path('plans', PlansView.as_view(), name='plans_list'),
 
@@ -23,6 +28,7 @@ urlpatterns = [
     path('subscriptions/student/<str:student_id>', StudentSubscriptionView.as_view(), name='student_subscription'),
 
     path('payments', PaymentsView.as_view(), name='payments_list_create'),
+    path('payments/upi/submit', UpiPaymentSubmitView.as_view(), name='upi_payment_submit'),
 
     path('leaves', LeavesView.as_view(), name='leaves_list_create'),
     path('leaves/<str:pk>/status', LeaveStatusUpdateView.as_view(), name='leave_status_update'),

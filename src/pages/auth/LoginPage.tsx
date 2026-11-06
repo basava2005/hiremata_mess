@@ -9,8 +9,6 @@ import {
   Lock,
   ArrowRight,
   ShieldCheck,
-  UserCheck,
-  GraduationCap,
   AlertCircle,
   ArrowLeft,
   KeyRound,
@@ -20,6 +18,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
+  MapPin,
+  Building2,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { Button } from '../../components/ui/Button'
@@ -43,6 +43,7 @@ export const LoginPage: React.FC = () => {
   const location = useLocation()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // Forgot password OTP modal states
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false)
@@ -73,8 +74,8 @@ export const LoginPage: React.FC = () => {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      mobile: '9876543201', // Default to student Rahul Verma
-      password: 'password123',
+      mobile: '',
+      password: '',
     },
   })
 
@@ -100,16 +101,12 @@ export const LoginPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Login failed. Please check your credentials.')
+      setErrorMessage(
+        err.response?.data?.detail || err.message || 'Login failed. Please check your mobile number and password.'
+      )
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const handleQuickLogin = (mobile: string, pass: string = 'password123') => {
-    setValue('mobile', mobile)
-    setValue('password', pass)
-    onSubmit({ mobile, password: pass })
   }
 
   // Handle Send Reset OTP
@@ -159,7 +156,6 @@ export const LoginPage: React.FC = () => {
     try {
       await otpService.updatePasswordWithOtp(resetMobile, resetOtp, resetNewPassword)
       setResetStep('SUCCESS')
-      // Fill login form
       setValue('mobile', resetMobile)
       setValue('password', resetNewPassword)
     } catch (err: any) {
@@ -170,69 +166,81 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50/60 via-slate-50 to-slate-100 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
-      {/* Back to Landing Page Link */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md mb-3">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50/70 via-slate-50 to-slate-100 flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8">
+      {/* Top back navigation */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md mb-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#15803d] transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#15803d] transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Hiremat Mess Home & Menu</span>
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Hiremat Mess Landing Page</span>
         </Link>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Brand Header */}
-        <div className="flex justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#15803d] flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#15803d] to-emerald-600 flex items-center justify-center text-white shadow-xl shadow-emerald-900/20 ring-4 ring-emerald-50">
             <Utensils className="w-8 h-8" />
           </div>
+
+          <div className="mt-3">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/80 border border-emerald-200 text-[#15803d] text-[11px] font-bold uppercase tracking-wider mb-1">
+              <span>100% Pure Veg</span>
+              <span>•</span>
+              <span>Davangere, Karnataka</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              Hiremat Mess (ಹಿರೇಮಠ್ ಮೆಸ್)
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+              Member Sign In • Student & Staff Portal
+            </p>
+          </div>
         </div>
-        <h2 className="mt-3 text-center text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-          Hiremat Mess
-        </h2>
-        <p className="text-center text-xs sm:text-sm text-slate-500 font-medium">
-          Member Sign In • Student & Staff Portal
-        </p>
       </div>
 
-      <div className="mt-5 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="shadow-xl border-slate-200">
+      {/* Main Login Card */}
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+        <Card className="shadow-2xl shadow-slate-200/60 border-slate-200/80 rounded-2xl overflow-hidden">
           <CardContent className="p-6 sm:p-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {errorMessage && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{errorMessage}</span>
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2.5 animate-in fade-in">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
+                  <span className="font-medium">{errorMessage}</span>
                 </div>
               )}
 
+              {/* Mobile Number Input */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   10-Digit Mobile Number (Login ID)
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                    <span className="text-xs font-medium text-slate-400 mr-1">+91</span>
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <span className="text-xs font-bold text-slate-500 mr-1">+91</span>
                     <Phone className="w-4 h-4" />
                   </div>
                   <input
                     type="tel"
                     maxLength={10}
-                    placeholder="9876543210"
+                    placeholder="Enter 10-digit mobile number"
                     {...register('mobile')}
-                    className="block w-full pl-14 pr-3 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-colors"
+                    className="block w-full pl-16 pr-3.5 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-all placeholder:font-normal placeholder:text-slate-400"
+                    autoFocus
                   />
                 </div>
                 {errors.mobile && (
-                  <p className="mt-1 text-xs text-rose-500">{errors.mobile.message}</p>
+                  <p className="mt-1 text-xs text-rose-500 font-medium">{errors.mobile.message}</p>
                 )}
               </div>
 
+              {/* Password Input */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-700">
                     Password
                   </label>
                   <button
@@ -246,117 +254,67 @@ export const LoginPage: React.FC = () => {
                       setResetStep('ENTER_MOBILE')
                       setIsForgotModalOpen(true)
                     }}
-                    className="text-xs font-bold text-[#15803d] hover:text-[#166534] hover:underline"
+                    className="text-xs font-bold text-[#15803d] hover:text-[#166534] hover:underline transition-colors"
                   >
                     Forgot Password? (Reset via OTP)
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
-                    type="password"
-                    placeholder="••••••••"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
                     {...register('password')}
-                    className="block w-full pl-10 pr-3 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-colors"
+                    className="block w-full pl-11 pr-10 py-2.5 text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-all placeholder:font-normal placeholder:text-slate-400"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-xs text-rose-500">{errors.password.message}</p>
+                  <p className="mt-1 text-xs text-rose-500 font-medium">{errors.password.message}</p>
                 )}
               </div>
 
+              {/* Submit Button */}
               <Button
                 type="submit"
                 isLoading={isSubmitting}
-                className="w-full mt-2 h-11 text-sm font-bold rounded-xl bg-[#15803d] hover:bg-[#166534]"
+                className="w-full mt-2 h-11 text-sm font-bold rounded-xl bg-[#15803d] hover:bg-[#166534] text-white shadow-md shadow-emerald-900/10 flex items-center justify-center gap-2"
               >
-                <span>Sign In to Portal</span>
-                <ArrowRight className="w-4 h-4 ml-1.5" />
+                <span>Sign In to Member Portal</span>
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </form>
 
-            {/* Dev Quick-Login Section */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Dev Quick-Login
-                </span>
-                <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
-                  Instant Demo Roles
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('9876543210')}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 p-2 rounded-xl text-left border border-slate-200 hover:border-[#15803d]/40 hover:bg-emerald-50/40 transition-all text-xs group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#15803d] flex items-center justify-center flex-shrink-0 group-hover:bg-[#15803d] group-hover:text-white transition-colors">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-800 leading-none truncate">Branch Admin</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Ramesh Sharma</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('9876543211')}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 p-2 rounded-xl text-left border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition-all text-xs group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-700 group-hover:text-white transition-colors">
-                    <UserCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-800 leading-none truncate">Mess Staff</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Suresh Patil</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('9876543201')}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 p-2 rounded-xl text-left border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 transition-all text-xs group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#15803d] flex items-center justify-center flex-shrink-0 group-hover:bg-[#15803d] group-hover:text-white transition-colors">
-                    <GraduationCap className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-800 leading-none truncate">Student (Rahul)</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">6/10 Leave Days</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin('9876543202')}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 p-2 rounded-xl text-left border border-amber-200 bg-amber-50/30 hover:border-amber-400 hover:bg-amber-50/70 transition-all text-xs group"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                    <GraduationCap className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-800 leading-none truncate">Student (Ananya)</p>
-                    <p className="text-[10px] text-amber-800 font-medium mt-0.5">Eligible 12 Days</p>
-                  </div>
-                </button>
-              </div>
+            {/* Assistance Info */}
+            <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+              <p className="text-xs text-slate-500">
+                New student admission or mess staff login?
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Accounts are provisioned by the Mess Administrator. Please contact the office counter at BIET Road.
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Footer info */}
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Hiremat Mess • Anjaneya Layout 5th Cross, BIET Rd, Davangere, Karnataka 577004
-        </p>
+        {/* Footer address info */}
+        <div className="mt-5 text-center space-y-1">
+          <p className="text-xs text-slate-500 flex items-center justify-center gap-1 font-medium">
+            <MapPin className="w-3.5 h-3.5 text-[#15803d]" />
+            <span>Anjaneya Layout 5th Cross, BIET Rd, Davangere, Karnataka 577004</span>
+          </p>
+          <p className="text-[11px] text-slate-400">
+            Hiremat Mess System • Powered by Direct UPI & Cloud Engine
+          </p>
+        </div>
       </div>
 
       {/* Forgot Password OTP Modal */}
@@ -413,7 +371,7 @@ export const LoginPage: React.FC = () => {
                         maxLength={10}
                         value={resetMobile}
                         onChange={(e) => setResetMobile(e.target.value.replace(/\D/g, ''))}
-                        placeholder="9876543201"
+                        placeholder="9876543210"
                         className="block w-full pl-14 pr-3 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-colors"
                         autoFocus
                       />
@@ -448,7 +406,7 @@ export const LoginPage: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
                         <div>
-                          <span className="font-bold">Demo OTP:</span>{' '}
+                          <span className="font-bold">Security OTP:</span>{' '}
                           <span className="font-mono font-bold text-amber-800">{resetDemoOtp}</span>
                         </div>
                       </div>

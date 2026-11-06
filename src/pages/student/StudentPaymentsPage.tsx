@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext'
 import { paymentsApi } from '../../api/payments'
 import { subscriptionsApi } from '../../api/subscriptions'
 import { Payment, PaymentStatus } from '../../types'
-import { RazorpayGatewayModal } from '../../components/payments/RazorpayGatewayModal'
+import { DirectUpiPaymentModal } from '../../components/payments/DirectUpiPaymentModal'
 import { formatCurrency, formatDate } from '../../lib/dates'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -196,15 +196,20 @@ export const StudentPaymentsPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Official Razorpay Payment Gateway Modal */}
-      <RazorpayGatewayModal
+      {/* Direct UPI Payment Modal (0% Gateway Fee, 0% GST) */}
+      <DirectUpiPaymentModal
         open={isGatewayOpen}
         onClose={() => setIsGatewayOpen(false)}
         amount={3500}
         studentId={studentId}
         studentName={student?.name || user?.name || 'Student'}
         studentMobile={student?.mobile || user?.mobile || '9876543201'}
-        onPaymentSuccess={handleRazorpaySuccess}
+        onPaymentSuccess={(payment) => {
+          queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
+          queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
+          setIsGatewayOpen(false)
+          setSelectedPaymentForReceipt(payment)
+        }}
       />
 
       {/* Printable Receipt Modal */}
