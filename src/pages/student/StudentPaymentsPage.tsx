@@ -105,9 +105,10 @@ export const StudentPaymentsPage: React.FC = () => {
           </div>
 
           <Button
+            variant="white"
             size="sm"
             onClick={() => setIsGatewayOpen(true)}
-            className="bg-white hover:bg-emerald-50 text-[#15803d] font-bold text-xs h-9 px-4 rounded-xl shadow-md"
+            className="h-9 px-4 rounded-xl shadow-md text-[#15803d] font-black text-xs"
           >
             Pay Direct UPI
           </Button>

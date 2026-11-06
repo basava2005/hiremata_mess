@@ -306,9 +306,10 @@ export const StudentHomePage: React.FC = () => {
                 </div>
 
                 <Button
+                  variant="amber"
                   size="sm"
                   onClick={() => setIsRenewModalOpen(true)}
-                  className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-lg border-0 self-start sm:self-center transition-transform active:scale-95"
+                  className="font-black text-xs px-5 py-2.5 rounded-xl shadow-lg border-0 self-start sm:self-center transition-transform active:scale-95 text-slate-950"
                 >
                   <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-slate-950" />
                   Direct UPI Renew (₹{monthlyFee.toLocaleString('en-IN')})
