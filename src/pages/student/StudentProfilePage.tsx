@@ -73,7 +73,7 @@ export const StudentProfilePage: React.FC = () => {
           Account Profile & Security
         </h2>
         <p className="text-xs sm:text-sm text-slate-500">
-          Manage your personal details and OTP-verified login credentials
+          Manage your personal details and account credentials
         </p>
       </div>
 

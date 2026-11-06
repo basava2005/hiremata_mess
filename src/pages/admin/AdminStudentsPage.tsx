@@ -44,6 +44,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { TableSkeleton } from '../../components/ui/Skeleton'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { BulkWaReminderModal } from '../../components/admin/BulkWaReminderModal'
+import { PasswordResetRequestsModal } from '../../components/admin/PasswordResetRequestsModal'
+import { authApi } from '../../api/auth'
 
 export const AdminStudentsPage: React.FC = () => {
   const queryClient = useQueryClient()
@@ -54,6 +56,7 @@ export const AdminStudentsPage: React.FC = () => {
 
   // Modal states
   const [isBulkWaOpen, setIsBulkWaOpen] = useState(false)
+  const [isResetRequestsOpen, setIsResetRequestsOpen] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null)
@@ -114,6 +117,15 @@ export const AdminStudentsPage: React.FC = () => {
     queryKey: ['adminStudents'],
     queryFn: () => studentsApi.getStudents(),
   })
+
+  // Fetch password reset requests
+  const { data: resetRequests = [] } = useQuery({
+    queryKey: ['adminPasswordResetRequests'],
+    queryFn: () => authApi.getPasswordResetRequests(),
+    refetchInterval: 10000,
+  })
+
+  const pendingResetCount = resetRequests.filter((r) => r.status === 'PENDING').length
 
   // Fetch all subscriptions for status lookup
   const { data: subscriptions = [], isLoading: isSubsLoading } = useQuery({
@@ -313,8 +325,21 @@ export const AdminStudentsPage: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             size="sm"
+            onClick={() => setIsResetRequestsOpen(true)}
+            className={`text-xs h-9 font-bold shadow-xs flex items-center gap-1.5 rounded-xl ${
+              pendingResetCount > 0
+                ? 'bg-amber-600 hover:bg-amber-700 text-white animate-pulse'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <Key className="w-3.5 h-3.5 text-amber-500" />
+            <span>Reset Requests ({pendingResetCount})</span>
+          </Button>
+
+          <Button
+            size="sm"
             onClick={() => setIsBulkWaOpen(true)}
-            className="bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs h-9 font-bold shadow-xs flex items-center gap-1.5"
+            className="bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs h-9 font-bold shadow-xs flex items-center gap-1.5 rounded-xl"
           >
             <MessageSquare className="w-3.5 h-3.5 fill-white" />
             <span>Bulk WhatsApp</span>
@@ -970,6 +995,12 @@ export const AdminStudentsPage: React.FC = () => {
         onClose={() => setIsBulkWaOpen(false)}
         students={students}
         subscriptions={subscriptions}
+      />
+
+      {/* Password Reset Requests Modal */}
+      <PasswordResetRequestsModal
+        open={isResetRequestsOpen}
+        onClose={() => setIsResetRequestsOpen(false)}
       />
     </div>
   )

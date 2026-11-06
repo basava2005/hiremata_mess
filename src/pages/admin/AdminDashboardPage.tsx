@@ -17,6 +17,7 @@ import {
   Send,
   CheckCircle2,
   MessageSquare,
+  KeyRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
@@ -27,12 +28,14 @@ import { leavesApi } from '../../api/leaves'
 import { extensionsApi } from '../../api/extensions'
 import { getFoodFeedbacks } from '../../api/feedback'
 import { remindersApi } from '../../api/reminders'
+import { authApi } from '../../api/auth'
 import { formatCurrency, formatDate, getDaysRemaining } from '../../lib/dates'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { StatusBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { CardSkeleton, TableSkeleton } from '../../components/ui/Skeleton'
 import { BulkWaReminderModal } from '../../components/admin/BulkWaReminderModal'
+import { PasswordResetRequestsModal } from '../../components/admin/PasswordResetRequestsModal'
 
 export const AdminDashboardPage: React.FC = () => {
   // 1. Fetch Students
@@ -70,6 +73,16 @@ export const AdminDashboardPage: React.FC = () => {
     queryKey: ['adminFoodFeedbacks'],
     queryFn: () => getFoodFeedbacks(),
   })
+
+  // 7. Fetch Password Reset Requests
+  const { data: resetRequests = [] } = useQuery({
+    queryKey: ['adminPasswordResetRequests'],
+    queryFn: () => authApi.getPasswordResetRequests(),
+    refetchInterval: 10000,
+  })
+
+  const pendingResetCount = resetRequests.filter((r) => r.status === 'PENDING').length
+  const [isResetRequestsOpen, setIsResetRequestsOpen] = useState(false)
 
   const avgRating =
     foodFeedbacks.length > 0
@@ -206,26 +219,69 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             size="sm"
+            onClick={() => setIsResetRequestsOpen(true)}
+            className={`text-xs font-bold shadow-xs flex items-center gap-1.5 rounded-xl ${
+              pendingResetCount > 0
+                ? 'bg-amber-600 hover:bg-amber-700 text-white animate-pulse'
+                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+            <span>Reset Requests ({pendingResetCount})</span>
+          </Button>
+
+          <Button
+            size="sm"
             onClick={() => setIsBulkWaOpen(true)}
-            className="bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+            className="bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 rounded-xl"
           >
             <MessageSquare className="w-3.5 h-3.5 fill-white" />
-            <span>Bulk WhatsApp Reminders</span>
+            <span>Bulk WhatsApp</span>
           </Button>
           <Link to="/admin/students">
-            <Button size="sm" className="bg-[#15803d] hover:bg-[#166534] text-xs">
+            <Button size="sm" className="bg-[#15803d] hover:bg-[#166534] text-xs rounded-xl">
               <Users className="w-3.5 h-3.5 mr-1.5" />
               Manage Students
             </Button>
           </Link>
           <Link to="/admin/payments">
-            <Button variant="outline" size="sm" className="text-xs">
+            <Button variant="outline" size="sm" className="text-xs rounded-xl">
               <IndianRupee className="w-3.5 h-3.5 mr-1.5" />
               Record Payment
             </Button>
           </Link>
         </div>
       </div>
+
+      {/* Password Reset Requests Pending Alert */}
+      {pendingResetCount > 0 && (
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+              <KeyRound className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-950 flex items-center gap-2">
+                <span>{pendingResetCount} Student Password Reset Request(s) Pending!</span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
+                  Admin Action Required
+                </span>
+              </h4>
+              <p className="text-xs text-amber-800">
+                Students requested a password reset. Review details and click "Verify & Accept" to change their password.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setIsResetRequestsOpen(true)}
+            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs flex-shrink-0 self-start sm:self-auto"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Review & Approve Now</span>
+          </Button>
+        </div>
+      )}
 
       {/* 6 Metric KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
@@ -495,6 +551,12 @@ export const AdminDashboardPage: React.FC = () => {
         onClose={() => setIsBulkWaOpen(false)}
         students={students}
         subscriptions={subscriptions}
+      />
+
+      {/* Password Reset Requests Modal */}
+      <PasswordResetRequestsModal
+        open={isResetRequestsOpen}
+        onClose={() => setIsResetRequestsOpen(false)}
       />
     </div>
   )

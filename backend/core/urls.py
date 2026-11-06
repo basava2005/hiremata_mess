@@ -7,13 +7,19 @@ from .views import (
     EligibleExtensionsView, ReviewExtensionView, NotificationsView,
     RazorpayCreateOrderView, RazorpayVerifyPaymentView, FirebaseRegisterTokenView,
     StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView, FoodFeedbackView,
-    SendOtpView, VerifyOtpAndResetPasswordView, SendReminderView
+    SendOtpView, VerifyOtpAndResetPasswordView, SendReminderView,
+    PasswordResetRequestSubmitView, PasswordResetRequestsListView,
+    PasswordResetRequestApproveView, PasswordResetRequestRejectView
 )
 
 urlpatterns = [
     path('auth/login', LoginView.as_view(), name='login'),
     path('auth/me', CurrentUserView.as_view(), name='current_user'),
     path('auth/password/change', PasswordChangeView.as_view(), name='password_change'),
+    path('auth/password/reset-request', PasswordResetRequestSubmitView.as_view(), name='password_reset_request_submit'),
+    path('auth/password/reset-requests', PasswordResetRequestsListView.as_view(), name='password_reset_requests_list'),
+    path('auth/password/reset-requests/<str:pk>/approve', PasswordResetRequestApproveView.as_view(), name='password_reset_request_approve'),
+    path('auth/password/reset-requests/<str:pk>/reject', PasswordResetRequestRejectView.as_view(), name='password_reset_request_reject'),
     path('auth/otp/send', SendOtpView.as_view(), name='send_otp'),
     path('auth/otp/verify-reset', VerifyOtpAndResetPasswordView.as_view(), name='verify_otp_reset'),
     path('reminders/send', SendReminderView.as_view(), name='send_reminders'),

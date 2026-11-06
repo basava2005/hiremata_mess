@@ -178,3 +178,24 @@ class OTPVerification(models.Model):
     def __str__(self):
         return f"OTP for {self.mobile} ({self.purpose}) - {'Verified' if self.is_verified else 'Pending'}"
 
+class PasswordResetRequest(models.Model):
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    )
+    id = models.CharField(max_length=64, primary_key=True)
+    branch_id = models.CharField(max_length=64, default='branch-main-01')
+    mobile = models.CharField(max_length=15)
+    student_name = models.CharField(max_length=120)
+    student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True, related_name='password_requests')
+    requested_password = models.CharField(max_length=128)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    admin_note = models.TextField(blank=True, default='')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reset Req {self.id} for {self.student_name} ({self.mobile}) - {self.status}"
+
+

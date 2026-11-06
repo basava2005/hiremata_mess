@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification, FoodFeedback
+from .models import (
+    UserAccount, Student, Plan, Subscription, Payment,
+    LeaveRequest, LeaveExtension, Notification, FoodFeedback, PasswordResetRequest
+)
 from .dates import get_subscription_status
 
 class UserAccountSerializer(serializers.ModelSerializer):
@@ -105,4 +108,17 @@ class FoodFeedbackSerializer(serializers.ModelSerializer):
     def get_studentName(self, obj):
         return obj.student.name if obj.student else ''
 
+class PasswordResetRequestSerializer(serializers.ModelSerializer):
+    studentId = serializers.CharField(source='student_id', read_only=True)
+    studentName = serializers.CharField(source='student_name', read_only=True)
+    requestedPassword = serializers.CharField(source='requested_password', read_only=True)
+    adminNote = serializers.CharField(source='admin_note', required=False, allow_blank=True)
+    approvedAt = serializers.DateTimeField(source='approved_at', read_only=True)
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
 
+    class Meta:
+        model = PasswordResetRequest
+        fields = [
+            'id', 'branch_id', 'mobile', 'studentName', 'studentId',
+            'requestedPassword', 'status', 'adminNote', 'approvedAt', 'createdAt'
+        ]

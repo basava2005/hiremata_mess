@@ -5,11 +5,14 @@ from datetime import date, timedelta
 from django.utils import timezone
 import random
 
-from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification, FoodFeedback, OTPVerification
+from .models import (
+    UserAccount, Student, Plan, Subscription, Payment,
+    LeaveRequest, LeaveExtension, Notification, FoodFeedback, OTPVerification, PasswordResetRequest
+)
 from .serializers import (
     UserAccountSerializer, StudentSerializer, PlanSerializer,
     SubscriptionSerializer, PaymentSerializer, LeaveRequestSerializer,
-    LeaveExtensionSerializer, NotificationSerializer, FoodFeedbackSerializer
+    LeaveExtensionSerializer, NotificationSerializer, FoodFeedbackSerializer, PasswordResetRequestSerializer
 )
 from .dates import calculate_last_date, inclusive_days, get_today_ist, get_subscription_status
 from .eligibility import check_leave_eligibility
@@ -789,6 +792,132 @@ class SendReminderView(APIView):
             'success': True,
             'message': f"Renewal reminders dispatched to {len(sent_records)} student(s).",
             'reminders': sent_records
+        }, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestSubmitView(APIView):
+    def post(self, request):
+        mobile = str(request.data.get('mobile', '')).strip()
+        requested_pwd = str(request.data.get('requestedPassword', request.data.get('newPassword', ''))).strip()
+        reason = str(request.data.get('reason', '')).strip()
+
+        if not mobile or len(mobile) != 10 or not mobile.isdigit():
+            return Response({'detail': 'Please provide a valid 10-digit registered mobile number.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not requested_pwd or len(requested_pwd) < 6:
+            return Response({'detail': 'New password must be at least 6 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = UserAccount.objects.filter(mobile=mobile).first()
+        if not user:
+            return Response({'detail': 'No registered account found with this mobile number. Please check with Mess Admin.'}, status=status.HTTP_404_NOT_FOUND)
+
+        student = Student.objects.filter(mobile=mobile).first() or (Student.objects.filter(id=user.student_id).first() if user.student_id else None)
+
+        req_id = f"pw-req-{random.randint(10000, 99999)}"
+        reset_req = PasswordResetRequest.objects.create(
+            id=req_id,
+            mobile=mobile,
+            student_name=user.name,
+            student=student,
+            requested_password=requested_pwd,
+            status='PENDING',
+            admin_note=reason
+        )
+
+        # Notify Admin in-app
+        Notification.objects.create(
+            id=f"notif-{random.randint(100000, 999999)}",
+            user_id='user-admin',
+            title=f"🔑 Password Reset Request: {user.name}",
+            message=f"{user.name} (+91 {mobile}) requested to reset their password. Please verify and accept.",
+            type='WARNING',
+            is_read=False
+        )
+
+        import urllib.parse
+        msg = f"ನಮಸ್ಕಾರ Ramesh Sir, I have submitted a password reset request for my Hiremat Mess account (+91 {mobile}). Please verify and accept."
+        whatsapp_url = f"https://api.whatsapp.com/send?phone=919876543210&text={urllib.parse.quote(msg)}"
+
+        return Response({
+            'success': True,
+            'message': 'Password reset request submitted successfully! Awaiting Admin verification.',
+            'requestId': reset_req.id,
+            'whatsappUrl': whatsapp_url,
+            'data': PasswordResetRequestSerializer(reset_req).data
+        }, status=status.HTTP_201_CREATED)
+
+
+class PasswordResetRequestsListView(APIView):
+    def get(self, request):
+        status_param = request.query_params.get('status')
+        qs = PasswordResetRequest.objects.all().order_by('-created_at')
+        if status_param:
+            qs = qs.filter(status=status_param.upper())
+        return Response(PasswordResetRequestSerializer(qs, many=True).data)
+
+
+class PasswordResetRequestApproveView(APIView):
+    def post(self, request, pk):
+        reset_req = PasswordResetRequest.objects.filter(id=pk).first()
+        if not reset_req:
+            return Response({'detail': 'Password reset request not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        new_pwd = str(request.data.get('newPassword', '')).strip() or reset_req.requested_password
+        admin_note = str(request.data.get('adminNote', '')).strip()
+
+        user = UserAccount.objects.filter(mobile=reset_req.mobile).first()
+        if not user:
+            return Response({'detail': 'Associated user account not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Update official user password
+        user.password = new_pwd
+        user.save()
+
+        # Update request record
+        reset_req.status = 'APPROVED'
+        reset_req.approved_at = timezone.now()
+        if admin_note:
+            reset_req.admin_note = admin_note
+        reset_req.save()
+
+        # Notify student in-app
+        Notification.objects.create(
+            id=f"notif-{random.randint(100000, 999999)}",
+            user_id=user.id,
+            title="Password Reset Approved",
+            message=f"Your password reset request has been verified and approved by Admin Ramesh Sharma. You can now log in.",
+            type='INFO',
+            is_read=False
+        )
+
+        import urllib.parse
+        msg = f"ನಮಸ್ಕಾರ {reset_req.student_name},\nYour Hiremat Mess Davangere password reset request has been APPROVED by Admin Ramesh Sharma.\nYour new password is: {new_pwd}\n\n📍 BIET Rd, Davangere\n📞 Contact: 9876543210"
+        whatsapp_url = f"https://api.whatsapp.com/send?phone=91{reset_req.mobile}&text={urllib.parse.quote(msg)}"
+
+        return Response({
+            'success': True,
+            'message': f"Password updated successfully for {reset_req.student_name}!",
+            'whatsappUrl': whatsapp_url,
+            'data': PasswordResetRequestSerializer(reset_req).data
+        }, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestRejectView(APIView):
+    def post(self, request, pk):
+        reset_req = PasswordResetRequest.objects.filter(id=pk).first()
+        if not reset_req:
+            return Response({'detail': 'Password reset request not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        admin_note = str(request.data.get('adminNote', '')).strip()
+        reset_req.status = 'REJECTED'
+        if admin_note:
+            reset_req.admin_note = admin_note
+        reset_req.save()
+
+        return Response({
+            'success': True,
+            'message': f"Password reset request rejected for {reset_req.student_name}.",
+            'data': PasswordResetRequestSerializer(reset_req).data
         }, status=status.HTTP_200_OK)
 
 

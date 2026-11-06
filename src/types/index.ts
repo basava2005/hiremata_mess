@@ -122,3 +122,19 @@ export interface ApiResponse<T> {
   success: boolean
 }
 
+export type PasswordResetStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface PasswordResetRequest {
+  id: string
+  branch_id?: string
+  mobile: string
+  studentName: string
+  studentId?: string | null
+  requestedPassword?: string
+  status: PasswordResetStatus
+  adminNote?: string
+  approvedAt?: string | null
+  createdAt: string
+}
+
+

@@ -21,6 +21,7 @@ import {
   MapPin,
   Building2,
   MessageSquare,
+  Clock,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { Button } from '../../components/ui/Button'
@@ -47,13 +48,15 @@ export const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Forgot password modal states (No OTP required)
+  // Forgot password modal states (Admin verification flow)
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false)
   const [resetMobile, setResetMobile] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [resetConfirmPassword, setResetConfirmPassword] = useState('')
+  const [resetReason, setResetReason] = useState('')
   const [resetShowPassword, setResetShowPassword] = useState(false)
   const [resetIsSuccess, setResetIsSuccess] = useState(false)
+  const [resetWhatsappUrl, setResetWhatsappUrl] = useState<string | null>(null)
   const [resetError, setResetError] = useState<string | null>(null)
   const [resetLoading, setResetLoading] = useState(false)
 
@@ -100,8 +103,8 @@ export const LoginPage: React.FC = () => {
     }
   }
 
-  // Handle Direct Password Reset (No OTP required)
-  const handleDirectPasswordReset = async (e: React.FormEvent) => {
+  // Handle Password Reset Request to Admin
+  const handleRequestPasswordReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setResetError(null)
 
@@ -122,14 +125,13 @@ export const LoginPage: React.FC = () => {
 
     setResetLoading(true)
     try {
-      await authApi.resetPassword(resetMobile, resetNewPassword)
+      const res = await authApi.submitPasswordResetRequest(resetMobile, resetNewPassword, resetReason)
       setResetIsSuccess(true)
-      setValue('mobile', resetMobile)
-      setValue('password', resetNewPassword)
-      toast.success('Password updated successfully!')
+      setResetWhatsappUrl(res.whatsappUrl || null)
+      toast.success('Password reset request submitted to Mess Admin!')
     } catch (err: any) {
       setResetError(
-        err.response?.data?.detail || err.message || 'Failed to update password. Please check your registered mobile number.'
+        err.response?.data?.detail || err.message || 'Failed to submit reset request. Please check your registered mobile number.'
       )
     } finally {
       setResetLoading(false)
@@ -298,8 +300,8 @@ export const LoginPage: React.FC = () => {
                   <KeyRound className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-white">Reset Account Password</h3>
-                  <p className="text-[11px] text-emerald-300">Hiremat Mess Student Account • Davangere</p>
+                  <h3 className="font-bold text-sm text-white">Request Password Reset</h3>
+                  <p className="text-[11px] text-emerald-300">Admin Verification Required • Hiremat Mess</p>
                 </div>
               </div>
               <button
@@ -308,6 +310,7 @@ export const LoginPage: React.FC = () => {
                   setIsForgotModalOpen(false)
                   setResetIsSuccess(false)
                   setResetError(null)
+                  setResetWhatsappUrl(null)
                 }}
                 className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
               >
@@ -325,11 +328,13 @@ export const LoginPage: React.FC = () => {
               )}
 
               {!resetIsSuccess ? (
-                <form onSubmit={handleDirectPasswordReset} className="space-y-4">
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs">
-                    <p className="font-semibold text-emerald-900">Direct Password Reset (No OTP needed)</p>
-                    <p className="text-[11px] text-emerald-800 mt-0.5">
-                      Enter your 10-digit mobile number registered with the mess to create your new password.
+                <form onSubmit={handleRequestPasswordReset} className="space-y-4">
+                  <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs space-y-1">
+                    <p className="font-bold text-amber-900 flex items-center gap-1.5">
+                      <span>Admin Verification & Approval Process</span>
+                    </p>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Enter your registered mobile and desired new password. Your request will be sent to Mess Admin Ramesh Sharma. Once verified and accepted by the admin, your password will change.
                     </p>
                   </div>
 
@@ -356,7 +361,7 @@ export const LoginPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      New Password (min 6 characters)
+                      Desired New Password (min 6 characters)
                     </label>
                     <div className="relative">
                       <input
@@ -378,7 +383,7 @@ export const LoginPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                      Confirm New Password
+                      Confirm Desired Password
                     </label>
                     <input
                       type={resetShowPassword ? 'text' : 'password'}
@@ -386,6 +391,19 @@ export const LoginPage: React.FC = () => {
                       onChange={(e) => setResetConfirmPassword(e.target.value)}
                       placeholder="Confirm new password"
                       className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Reason / Note for Admin (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={resetReason}
+                      onChange={(e) => setResetReason(e.target.value)}
+                      placeholder="e.g. Forgot previous password"
+                      className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white focus:border-[#15803d] focus:ring-2 focus:ring-[#15803d]/20"
                     />
                   </div>
 
@@ -403,11 +421,11 @@ export const LoginPage: React.FC = () => {
                       isLoading={resetLoading}
                       className="w-2/3 text-xs h-10 font-bold bg-[#15803d] hover:bg-[#166534] rounded-xl"
                     >
-                      Update Password
+                      Submit Request to Admin
                     </Button>
                   </div>
 
-                  {/* WhatsApp Admin Support Button */}
+                  {/* WhatsApp Admin Direct Link */}
                   <div className="pt-2 border-t border-slate-100 text-center">
                     <a
                       href="https://api.whatsapp.com/send?phone=919876543210&text=Hello%20Ramesh%20Sir%2C%20I%20am%20a%20student%20at%20Hiremat%20Mess%20Davangere%20and%20need%20help%20with%20my%20account%20password."
@@ -416,31 +434,53 @@ export const LoginPage: React.FC = () => {
                       className="inline-flex items-center justify-center gap-1.5 text-[11px] text-[#25D366] hover:underline font-semibold"
                     >
                       <MessageSquare className="w-3.5 h-3.5 fill-current" />
-                      <span>Need Help? Chat with Admin Ramesh Sharma on WhatsApp 📲</span>
+                      <span>Chat with Admin Ramesh Sharma on WhatsApp 📲</span>
                     </a>
                   </div>
                 </form>
               ) : (
-                <div className="text-center py-4 space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#15803d] flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-7 h-7" />
+                <div className="text-center py-4 space-y-3.5">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-xs">
+                    <Clock className="w-7 h-7" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Password Reset Successfully!</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Your new password is now active for mobile <strong>+91 {resetMobile}</strong>.
+                    <h4 className="font-bold text-slate-900 text-sm">Reset Request Submitted to Admin!</h4>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Your request for mobile <strong>+91 {resetMobile}</strong> is pending review by Mess Administrator Ramesh Sharma.
+                    </p>
+                    <p className="text-[11px] text-amber-800 font-medium mt-1">
+                      Once verified and accepted, your new password will be activated automatically.
                     </p>
                   </div>
+
+                  {resetWhatsappUrl && (
+                    <div className="pt-1">
+                      <a
+                        href={resetWhatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba5a] py-2.5 px-3 rounded-xl shadow-xs transition-transform active:scale-98"
+                      >
+                        <MessageSquare className="w-4 h-4 fill-white" />
+                        <span>Notify Admin Ramesh Sharma on WhatsApp 📲</span>
+                      </a>
+                    </div>
+                  )}
+
                   <Button
                     type="button"
+                    variant="outline"
                     onClick={() => {
                       setIsForgotModalOpen(false)
-                      onSubmit({ mobile: resetMobile, password: resetNewPassword })
+                      setResetIsSuccess(false)
+                      setResetMobile('')
+                      setResetNewPassword('')
+                      setResetConfirmPassword('')
+                      setResetReason('')
                     }}
-                    className="w-full text-xs h-10 font-bold bg-[#15803d] hover:bg-[#166534] rounded-xl mt-2"
+                    className="w-full text-xs h-10 font-bold rounded-xl mt-1"
                   >
-                    <span>Sign In Now</span>
-                    <ArrowRight className="w-4 h-4 ml-1.5" />
+                    <span>Done</span>
                   </Button>
                 </div>
               )}

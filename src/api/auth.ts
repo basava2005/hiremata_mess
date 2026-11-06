@@ -1,5 +1,5 @@
 import { apiClient, mockDelay, tokenStorage, USE_MOCKS } from './client'
-import { AuthResponse, User } from '../types'
+import { AuthResponse, User, PasswordResetRequest } from '../types'
 import { mockDB } from '../mocks/db'
 
 export interface LoginCredentials {
@@ -97,6 +97,128 @@ export const authApi = {
     const res = await apiClient.post('/auth/password/change', {
       mobile,
       newPassword,
+    })
+    return res.data
+  },
+
+  submitPasswordResetRequest: async (
+    mobile: string,
+    requestedPassword: string,
+    reason?: string
+  ): Promise<{ success: boolean; message: string; requestId: string; whatsappUrl?: string; data?: PasswordResetRequest }> => {
+    if (USE_MOCKS) {
+      const user = mockDB.getUserByUsernameOrMobile(mobile)
+      if (!user) {
+        throw new Error('No registered account found with this mobile number.')
+      }
+      const rawReqs = sessionStorage.getItem('messpro_reset_requests') || '[]'
+      const reqs: PasswordResetRequest[] = JSON.parse(rawReqs)
+      const newReq: PasswordResetRequest = {
+        id: `pw-req-${Date.now()}`,
+        mobile,
+        studentName: user.name,
+        studentId: user.studentId || null,
+        requestedPassword,
+        status: 'PENDING',
+        adminNote: reason || '',
+        createdAt: new Date().toISOString(),
+      }
+      reqs.unshift(newReq)
+      sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=919876543210&text=${encodeURIComponent(
+        `ನಮಸ್ಕಾರ Ramesh Sir, I have submitted a password reset request for my Hiremat Mess account (+91 ${mobile}). Please verify and accept.`
+      )}`
+      return mockDelay({
+        success: true,
+        message: 'Password reset request submitted successfully! Awaiting Admin verification.',
+        requestId: newReq.id,
+        whatsappUrl,
+        data: newReq,
+      })
+    }
+
+    const res = await apiClient.post('/auth/password/reset-request', {
+      mobile,
+      requestedPassword,
+      reason,
+    })
+    return res.data
+  },
+
+  getPasswordResetRequests: async (status?: string): Promise<PasswordResetRequest[]> => {
+    if (USE_MOCKS) {
+      const rawReqs = sessionStorage.getItem('messpro_reset_requests') || '[]'
+      let reqs: PasswordResetRequest[] = JSON.parse(rawReqs)
+      if (status) {
+        reqs = reqs.filter((r) => r.status === status.toUpperCase())
+      }
+      return mockDelay(reqs, 50)
+    }
+
+    const res = await apiClient.get<PasswordResetRequest[]>('/auth/password/reset-requests', {
+      params: status ? { status } : undefined,
+    })
+    return res.data
+  },
+
+  approvePasswordResetRequest: async (
+    id: string,
+    newPassword?: string,
+    adminNote?: string
+  ): Promise<{ success: boolean; message: string; whatsappUrl?: string; data?: PasswordResetRequest }> => {
+    if (USE_MOCKS) {
+      const rawReqs = sessionStorage.getItem('messpro_reset_requests') || '[]'
+      const reqs: PasswordResetRequest[] = JSON.parse(rawReqs)
+      const target = reqs.find((r) => r.id === id)
+      if (!target) throw new Error('Request not found')
+      target.status = 'APPROVED'
+      target.approvedAt = new Date().toISOString()
+      if (adminNote) target.adminNote = adminNote
+
+      // update password registry
+      const rawPasswords = sessionStorage.getItem('messpro_passwords') || '{}'
+      const registry = JSON.parse(rawPasswords)
+      const finalPwd = newPassword || target.requestedPassword || 'password123'
+      registry[target.mobile] = finalPwd
+      sessionStorage.setItem('messpro_passwords', JSON.stringify(registry))
+      sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
+
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=91${target.mobile}&text=${encodeURIComponent(
+        `ನಮಸ್ಕಾರ ${target.studentName},\nYour Hiremat Mess password reset request has been APPROVED by Admin Ramesh Sharma.\nYour new password is: ${finalPwd}\n\n📍 BIET Rd, Davangere\n📞 9876543210`
+      )}`
+
+      return mockDelay({
+        success: true,
+        message: `Password updated successfully for ${target.studentName}!`,
+        whatsappUrl,
+        data: target,
+      })
+    }
+
+    const res = await apiClient.post(`/auth/password/reset-requests/${id}/approve`, {
+      newPassword,
+      adminNote,
+    })
+    return res.data
+  },
+
+  rejectPasswordResetRequest: async (
+    id: string,
+    adminNote?: string
+  ): Promise<{ success: boolean; message: string; data?: PasswordResetRequest }> => {
+    if (USE_MOCKS) {
+      const rawReqs = sessionStorage.getItem('messpro_reset_requests') || '[]'
+      const reqs: PasswordResetRequest[] = JSON.parse(rawReqs)
+      const target = reqs.find((r) => r.id === id)
+      if (!target) throw new Error('Request not found')
+      target.status = 'REJECTED'
+      if (adminNote) target.adminNote = adminNote
+      sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
+      return mockDelay({ success: true, message: 'Password reset request rejected.', data: target })
+    }
+
+    const res = await apiClient.post(`/auth/password/reset-requests/${id}/reject`, {
+      adminNote,
     })
     return res.data
   },
