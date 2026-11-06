@@ -63,9 +63,12 @@
 }
 
 /* Completely Hide Netlify Badges, Drawers, and Injected Floaters */
+#nl-badge-frame,
+#nl-hud-frame,
 #netlify-badge,
 .netlify-badge,
 [data-netlify-badge],
+iframe[title*="Netlify"],
 iframe[src*="netlify"],
 #netlify-drawer-container,
 div[class*="netlify-badge"],
@@ -75,5 +78,11 @@ netlify-drawer {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
+  clip-path: path("M0 0Z") !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
   z-index: -9999 !important;
 }

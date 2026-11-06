@@ -1,2 +1,4 @@
-/*    /index.html   200
+/api/v1/*  https://hiremata-mess.onrender.com/api/v1/:splat  200!
+/auth/*    https://hiremata-mess.onrender.com/auth/:splat    200!
+/*         /index.html                                       200
 

@@ -11,9 +11,38 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600&display=swap" rel="stylesheet">
+    <script>
+      try {
+        localStorage.setItem('nl-hud:public:v1', 'hidden:9999999999999');
+        localStorage.setItem('nl-hud:owner-private:v1', 'hidden');
+      } catch(e) {}
+      var netlifyKillObserver = new MutationObserver(function() {
+        var el = document.getElementById('nl-badge-frame') || document.getElementById('nl-hud-frame') || document.querySelector('iframe[title*="Netlify"]');
+        if (el) el.remove();
+      });
+      netlifyKillObserver.observe(document.documentElement, { childList: true, subtree: true });
+    </script>
     <style>
-      #netlify-badge, .netlify-badge, [data-netlify-badge], iframe[src*="netlify"], #netlify-drawer-container, netlify-drawer {
-        display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;
+      #nl-badge-frame,
+      #nl-hud-frame,
+      #netlify-badge,
+      .netlify-badge,
+      [data-netlify-badge],
+      iframe[title*="Netlify"],
+      iframe[src*="netlify"],
+      #netlify-drawer-container,
+      netlify-drawer {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        clip-path: path("M0 0Z") !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        z-index: -9999 !important;
       }
     </style>
   </head>
