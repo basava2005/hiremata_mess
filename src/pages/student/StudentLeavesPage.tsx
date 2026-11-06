@@ -120,16 +120,15 @@ export const StudentLeavesPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Advance Notice Rule Card */}
+      {/* Daily Leave Compensation Policy Card */}
       <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-start gap-3">
         <Sparkles className="w-5 h-5 text-[#15803d] flex-shrink-0 mt-0.5" />
         <div className="text-xs text-slate-700 space-y-1">
           <p className="font-bold text-emerald-950">
-            Advance Notice & Extension Benefit Rule
+            100% Daily Leave Credit & Pass Extension
           </p>
           <p className="leading-relaxed">
-            Submit leave with at least <strong>1 day advance notice</strong>. When you accumulate{' '}
-            <strong>10+ consecutive approved leave days</strong>, you become eligible for subscription extensions!
+            Submit your leave with start and end dates. Once <strong>Admin verifies and approves</strong> your leave, your subscription last date is <strong>automatically extended by the exact number of leave days</strong> taken (1 leave day = +1 validity day).
           </p>
         </div>
       </div>

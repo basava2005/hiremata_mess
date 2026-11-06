@@ -308,19 +308,85 @@ class LeavesView(APIView):
             status=l_status,
             admin_note=admin_note
         )
+
+        # If leave is created directly as APPROVED by admin, automatically extend subscription
+        if l_status == 'APPROVED':
+            sub = Subscription.objects.filter(student=student).order_by('-last_date').first()
+            if sub:
+                old_last = sub.last_date
+                new_last = old_last + timedelta(days=days)
+                sub.last_date = new_last
+                sub.status = get_subscription_status(sub.start_date, new_last)
+                sub.save()
+
+                LeaveExtension.objects.create(
+                    id=f"ext-{random.randint(100000, 999999)}",
+                    student=student,
+                    subscription=sub,
+                    old_last_date=old_last,
+                    new_last_date=new_last,
+                    days_added=days,
+                    status='APPROVED',
+                    note=f"Approved leave ({s_date.strftime('%d-%b')} to {e_date.strftime('%d-%b')}): +{days} days"
+                )
+
+                Notification.objects.create(
+                    id=f"notif-{random.randint(100000, 999999)}",
+                    user_id=student.user_id,
+                    title=f"Leave Approved (+{days} Days Extended)",
+                    message=f"Your mess leave has been approved! Pass validity extended by {days} days till {new_last.strftime('%d-%b-%Y')}.",
+                    is_read=False
+                )
+
         return Response(LeaveRequestSerializer(leave).data, status=status.HTTP_201_CREATED)
 
 class LeaveStatusUpdateView(APIView):
     def patch(self, request, pk):
         leave = LeaveRequest.objects.filter(id=pk).first()
         if not leave:
-            return Response({'detail': 'Not found'}, status=404)
+            return Response({'detail': 'Leave request not found'}, status=404)
 
-        if 'status' in request.data:
-            leave.status = request.data['status']
-        if 'adminNote' in request.data:
-            leave.admin_note = request.data['adminNote']
+        prev_status = leave.status
+        new_status = request.data.get('status')
+        admin_note = request.data.get('adminNote')
+
+        if new_status:
+            leave.status = new_status
+        if admin_note is not None:
+            leave.admin_note = admin_note
         leave.save()
+
+        # When admin verifies and marks leave as APPROVED, automatically extend student subscription!
+        if new_status == 'APPROVED' and prev_status != 'APPROVED':
+            student = leave.student
+            sub = Subscription.objects.filter(student=student).order_by('-last_date').first()
+            if sub:
+                days_to_add = leave.days_count
+                old_last = sub.last_date
+                new_last = old_last + timedelta(days=days_to_add)
+                sub.last_date = new_last
+                sub.status = get_subscription_status(sub.start_date, new_last)
+                sub.save()
+
+                LeaveExtension.objects.create(
+                    id=f"ext-{random.randint(100000, 999999)}",
+                    student=student,
+                    subscription=sub,
+                    old_last_date=old_last,
+                    new_last_date=new_last,
+                    days_added=days_to_add,
+                    status='APPROVED',
+                    note=f"Automatic extension for approved leave ({leave.start_date.strftime('%d-%b')} to {leave.end_date.strftime('%d-%b')}): +{days_to_add} days"
+                )
+
+                Notification.objects.create(
+                    id=f"notif-{random.randint(100000, 999999)}",
+                    user_id=student.user_id,
+                    title=f"Leave Approved (+{days_to_add} Days Extended)",
+                    message=f"Admin marked your leave ({leave.start_date.strftime('%d-%b-%Y')} to {leave.end_date.strftime('%d-%b-%Y')}) as Approved. Your subscription has been extended by {days_to_add} days till {new_last.strftime('%d-%b-%Y')}!",
+                    is_read=False
+                )
+
         return Response(LeaveRequestSerializer(leave).data)
 
 class ExtensionsView(APIView):
@@ -877,8 +943,8 @@ class PasswordResetRequestSubmitView(APIView):
         )
 
         import urllib.parse
-        msg = f"ನಮಸ್ಕಾರ Ramesh Sir, I have submitted a password reset request for my Hiremat Mess account (+91 {mobile}). Please verify and accept."
-        whatsapp_url = f"https://api.whatsapp.com/send?phone=919876543210&text={urllib.parse.quote(msg)}"
+        msg = f"ನಮಸ್ಕಾರ Admin, I have submitted a password reset request for my Hiremat Mess account (+91 {mobile}). Please verify and accept."
+        whatsapp_url = f"https://api.whatsapp.com/send?phone=919353198281&text={urllib.parse.quote(msg)}"
 
         return Response({
             'success': True,
@@ -933,7 +999,7 @@ class PasswordResetRequestApproveView(APIView):
         )
 
         import urllib.parse
-        msg = f"ನಮಸ್ಕಾರ {reset_req.student_name},\nYour Hiremat Mess Davangere password reset request has been APPROVED by Admin Ramesh Sharma.\nYour new password is: {new_pwd}\n\n📍 BIET Rd, Davangere\n📞 Contact: 9876543210"
+        msg = f"ನಮಸ್ಕಾರ {reset_req.student_name},\nYour Hiremat Mess Davangere password reset request has been APPROVED by Mess Admin.\nYour new password is: {new_pwd}\n\n📍 BIET Rd, Davangere\n📞 Contact: 9353198281"
         whatsapp_url = f"https://api.whatsapp.com/send?phone=91{reset_req.mobile}&text={urllib.parse.quote(msg)}"
 
         return Response({

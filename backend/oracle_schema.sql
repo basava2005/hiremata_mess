@@ -238,10 +238,13 @@ VALUES (
 );
 
 INSERT INTO MESS_USER_ACCOUNT (ID, BRANCH_ID, MOBILE, NAME, ROLE, PASSWORD_HASH)
-VALUES ('user-admin', 'branch-main-01', '9876543210', 'Ramesh Sharma', 'BRANCH_ADMIN', 'pbkdf2_sha256$password123');
+VALUES ('admin-chandan', 'branch-main-01', '8431413551', 'Chandan Hiremat', 'BRANCH_ADMIN', 'pbkdf2_sha256$Chandu@143');
 
 INSERT INTO MESS_USER_ACCOUNT (ID, BRANCH_ID, MOBILE, NAME, ROLE, PASSWORD_HASH)
-VALUES ('user-staff', 'branch-main-01', '9876543211', 'Suresh Patil', 'MESS_STAFF', 'pbkdf2_sha256$password123');
+VALUES ('admin-punith', 'branch-main-01', '8073113562', 'Punith Hiremat', 'BRANCH_ADMIN', 'pbkdf2_sha256$Punith@143');
+
+INSERT INTO MESS_USER_ACCOUNT (ID, BRANCH_ID, MOBILE, NAME, ROLE, PASSWORD_HASH)
+VALUES ('admin-basavaraj', 'branch-main-01', '9353198281', 'Basavaraj H A', 'BRANCH_ADMIN', 'pbkdf2_sha256$Basava@143');
 
 COMMIT;
 -- ============================================================================

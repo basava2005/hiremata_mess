@@ -50,7 +50,7 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [activePortalTab, setActivePortalTab] = useState<'STUDENT' | 'ADMIN_STAFF'>('STUDENT')
+  const [activePortalTab, setActivePortalTab] = useState<'STUDENT' | 'ADMIN'>('STUDENT')
 
   // Forgot password modal states (Admin verification flow)
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false)
@@ -92,8 +92,6 @@ export const LoginPage: React.FC = () => {
       } else {
         if (userRole === 'BRANCH_ADMIN') {
           navigate('/admin', { replace: true })
-        } else if (userRole === 'MESS_STAFF') {
-          navigate('/staff', { replace: true })
         } else {
           navigate('/student', { replace: true })
         }
@@ -107,14 +105,6 @@ export const LoginPage: React.FC = () => {
     }
   }
 
-  // Quick fill demo test accounts
-  const fillCredentials = (mobile: string, pass: string, portal: 'STUDENT' | 'ADMIN_STAFF') => {
-    setValue('mobile', mobile, { shouldValidate: true })
-    setValue('password', pass, { shouldValidate: true })
-    setActivePortalTab(portal)
-    setErrorMessage(null)
-    toast.info(`Filled credentials for ${portal === 'STUDENT' ? 'Student' : 'Staff / Admin'}`)
-  }
 
   // Handle Password Reset Request to Admin
   const handleRequestPasswordReset = async (e: React.FormEvent) => {
@@ -207,15 +197,15 @@ export const LoginPage: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setActivePortalTab('ADMIN_STAFF')}
+              onClick={() => setActivePortalTab('ADMIN')}
               className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
-                activePortalTab === 'ADMIN_STAFF'
+                activePortalTab === 'ADMIN'
                   ? 'bg-white text-[#15803d] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Shield className="w-4 h-4" />
-              <span>Admin & Staff</span>
+              <span>Admin Portal</span>
             </button>
           </div>
 
@@ -244,7 +234,7 @@ export const LoginPage: React.FC = () => {
                   placeholder={
                     activePortalTab === 'STUDENT'
                       ? 'e.g. 9353198281'
-                      : 'e.g. 9876543210 (Admin) / 1234567890 (Staff)'
+                      : 'e.g. 8431413551 / 8073113562 / 9353198281'
                   }
                   {...register('mobile')}
                   className="block w-full pl-16 pr-4 py-3 text-sm font-semibold rounded-2xl border-2 border-slate-200 bg-slate-50/60 focus:bg-white focus:border-[#15803d] focus:ring-4 focus:ring-[#15803d]/15 transition-all placeholder:font-normal placeholder:text-slate-400"
@@ -311,35 +301,7 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* Quick 1-Tap Demo Credentials Helper */}
-          <div className="pt-3 border-t border-slate-100">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
-              Quick 1-Tap Login Shortcuts:
-            </p>
-            <div className="grid grid-cols-3 gap-1.5 text-center">
-              <button
-                type="button"
-                onClick={() => fillCredentials('9353198281', 'password123', 'STUDENT')}
-                className="p-2 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[#15803d] hover:bg-emerald-100 transition-all text-xs font-bold"
-              >
-                🎓 Student
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredentials('9876543210', 'admin123', 'ADMIN_STAFF')}
-                className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 hover:bg-slate-200 transition-all text-xs font-bold"
-              >
-                🛡️ Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredentials('1234567890', 'staff123', 'ADMIN_STAFF')}
-                className="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100 transition-all text-xs font-bold"
-              >
-                👨‍🍳 Staff
-              </button>
-            </div>
-          </div>
+
         </div>
       </div>
 

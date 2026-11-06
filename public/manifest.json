@@ -1,0 +1,19 @@
+{
+  "name": "Hiremat Mess Davangere - 100% Pure Veg",
+  "short_name": "Hiremat Mess",
+  "description": "Hiremat Mess Davangere - Homestyle Pure Veg Breakfast, Chapati Meals & Sunday Holige Feast at BIET Road",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafcf7",
+  "theme_color": "#15803d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64 128x128 256x256 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

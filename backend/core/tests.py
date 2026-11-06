@@ -9,7 +9,7 @@ class MessProApiTests(TestCase):
         self.client = APIClient()
 
     def test_login(self):
-        res = self.client.post('/api/v1/auth/login', {'mobile': '9876543210', 'password': 'password123'}, format='json')
+        res = self.client.post('/api/v1/auth/login', {'mobile': '8431413551', 'password': 'Chandu@143'}, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn('token', res.data)
         self.assertEqual(res.data['user']['role'], 'BRANCH_ADMIN')

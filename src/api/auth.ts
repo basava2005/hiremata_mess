@@ -15,16 +15,19 @@ export const authApi = {
         throw new Error('User with this mobile/username does not exist')
       }
 
-      // Check password if custom password was set
+      // Default credentials map for authorized administrators
+      const defaultPasswords: Record<string, string> = {
+        '8431413551': 'Chandu@143',
+        '8073113562': 'Punith@143',
+        '9353198281': 'Basava@143',
+      }
+
+      // Check password if custom password was set or matches default
       const rawPasswords = sessionStorage.getItem('messpro_passwords') || '{}'
       const registry = JSON.parse(rawPasswords)
-      const expectedPassword = registry[user.mobile] || 'password123'
-      if (
-        credentials.password &&
-        credentials.password !== expectedPassword &&
-        credentials.password !== 'password123'
-      ) {
-        throw new Error('Incorrect password. Please verify or reset using OTP.')
+      const expectedPassword = registry[user.mobile] || defaultPasswords[user.mobile] || 'password123'
+      if (credentials.password && credentials.password !== expectedPassword) {
+        throw new Error('Incorrect password. Please verify your credentials.')
       }
 
       // Generate a mock JWT
@@ -125,8 +128,8 @@ export const authApi = {
       }
       reqs.unshift(newReq)
       sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
-      const whatsappUrl = `https://api.whatsapp.com/send?phone=919876543210&text=${encodeURIComponent(
-        `ನಮಸ್ಕಾರ Ramesh Sir, I have submitted a password reset request for my Hiremat Mess account (+91 ${mobile}). Please verify and accept.`
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=919353198281&text=${encodeURIComponent(
+        `ನಮಸ್ಕಾರ Admin, I have submitted a password reset request for my Hiremat Mess account (+91 ${mobile}). Please verify and accept.`
       )}`
       return mockDelay({
         success: true,
@@ -184,7 +187,7 @@ export const authApi = {
       sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
 
       const whatsappUrl = `https://api.whatsapp.com/send?phone=91${target.mobile}&text=${encodeURIComponent(
-        `ನಮಸ್ಕಾರ ${target.studentName},\nYour Hiremat Mess password reset request has been APPROVED by Admin Ramesh Sharma.\nYour new password is: ${finalPwd}\n\n📍 BIET Rd, Davangere\n📞 9876543210`
+        `ನಮಸ್ಕಾರ ${target.studentName},\nYour Hiremat Mess password reset request has been APPROVED by Mess Admin.\nYour new password is: ${finalPwd}\n\n📍 BIET Rd, Davangere\n📞 9353198281`
       )}`
 
       return mockDelay({

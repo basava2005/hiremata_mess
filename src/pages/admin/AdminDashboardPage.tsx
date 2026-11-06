@@ -390,7 +390,7 @@ export const AdminDashboardPage: React.FC = () => {
                         {student?.mobile && (
                           <a
                             href={`https://api.whatsapp.com/send?phone=91${student.mobile.replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
-                              `ನಮಸ್ಕಾರ ${student.name},\nYour Hiremat Mess Davangere subscription expires in *${daysLeft} days* (on ${formatDate(sub.lastDate)}).\n\nPlease renew via Direct UPI to *hirematmess@upi* (₹3,500 / 30 Days) to ensure uninterrupted hot meals.\n\n📍 BIET Road, Davangere\n📞 Contact Admin Ramesh Sharma: 9876543210`
+                              `ನಮಸ್ಕಾರ ${student.name},\nYour Hiremat Mess Davangere subscription expires in *${daysLeft} days* (on ${formatDate(sub.lastDate)}).\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to ensure uninterrupted hot meals.\n\n📍 BIET Road, Davangere\n📞 Contact Admin: 9353198281`
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"

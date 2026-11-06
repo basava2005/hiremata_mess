@@ -39,15 +39,36 @@ class Command(BaseCommand):
         )
         self.stdout.write(f"Created Plan: {plan.name} (Rs. {plan.price})")
 
-        # 3. Create THE ONLY ONE ADMIN (Branch Administrator)
-        admin = UserAccount.objects.create(
-            id='admin-01',
-            branch_id=branch.id,
-            mobile='9876543210',
-            name='Ramesh Sharma',
-            role='BRANCH_ADMIN',
-            password='password123',
-            student_id=None
-        )
-        self.stdout.write(self.style.SUCCESS(f"Successfully configured ONLY ONE ADMIN: {admin.name} ({admin.mobile})"))
+        # 3. Create Official Branch Administrators
+        admins = [
+            UserAccount.objects.create(
+                id='admin-chandan',
+                branch_id=branch.id,
+                mobile='8431413551',
+                name='Chandan Hiremat',
+                role='BRANCH_ADMIN',
+                password='Chandu@143',
+                student_id=None
+            ),
+            UserAccount.objects.create(
+                id='admin-punith',
+                branch_id=branch.id,
+                mobile='8073113562',
+                name='Punith Hiremat',
+                role='BRANCH_ADMIN',
+                password='Punith@143',
+                student_id=None
+            ),
+            UserAccount.objects.create(
+                id='admin-basavaraj',
+                branch_id=branch.id,
+                mobile='9353198281',
+                name='Basavaraj H A',
+                role='BRANCH_ADMIN',
+                password='Basava@143',
+                student_id=None
+            ),
+        ]
+        for a in admins:
+            self.stdout.write(self.style.SUCCESS(f"Configured Admin: {a.name} ({a.mobile})"))
         self.stdout.write(self.style.SUCCESS("All mock data removed. System is ready for live production use!"))

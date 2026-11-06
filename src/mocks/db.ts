@@ -21,7 +21,7 @@ import {
 } from './mockData'
 import { inclusiveDays, getSubscriptionStatus, addDaysToDate } from '../lib/dates'
 
-const STORAGE_KEY = 'messpro_mock_db_v2_davanagere'
+const STORAGE_KEY = 'messpro_mock_db_v3_hiremat_admins'
 
 interface MockDBState {
   users: User[]
@@ -331,11 +331,39 @@ class MockDatabase {
   public updateLeaveStatus(id: string, status: LeaveRequest['status'], adminNote?: string) {
     const idx = this.state.leaves.findIndex((l) => l.id === id)
     if (idx !== -1) {
+      const prevStatus = this.state.leaves[idx].status
       this.state.leaves[idx] = {
         ...this.state.leaves[idx],
         status,
         adminNote: adminNote !== undefined ? adminNote : this.state.leaves[idx].adminNote,
       }
+
+      // Auto-extend subscription on leave approval
+      if (status === 'APPROVED' && prevStatus !== 'APPROVED') {
+        const leave = this.state.leaves[idx]
+        const sub = this.state.subscriptions
+          .filter((s) => s.studentId === leave.studentId)
+          .sort((a, b) => b.lastDate.localeCompare(a.lastDate))[0]
+
+        if (sub) {
+          const oldLast = new Date(sub.lastDate)
+          const newLast = new Date(oldLast)
+          newLast.setDate(newLast.getDate() + leave.daysCount)
+          const newLastStr = newLast.toISOString().slice(0, 10)
+
+          sub.lastDate = newLastStr
+          this.createExtension({
+            studentId: leave.studentId,
+            subscriptionId: sub.id,
+            oldLastDate: sub.lastDate,
+            newLastDate: newLastStr,
+            daysAdded: leave.daysCount,
+            status: 'APPROVED',
+            note: `Approved leave: +${leave.daysCount} days`,
+          })
+        }
+      }
+
       this.saveState()
       return this.state.leaves[idx]
     }

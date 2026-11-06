@@ -31,10 +31,9 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { label: 'Dashboard', path: '/admin', icon: LayoutDashboard, end: true },
     { label: 'Students', path: '/admin/students', icon: Users },
-    { label: 'Mess Staff', path: '/admin/staff', icon: UserCheck },
     { label: 'Payments', path: '/admin/payments', icon: IndianRupee },
-    { label: 'Leaves', path: '/admin/leaves', icon: CalendarOff },
-    { label: 'Extensions', path: '/admin/extensions', icon: Sparkles },
+    { label: 'Leaves & Extensions', path: '/admin/leaves', icon: CalendarOff },
+    { label: 'Extensions Log', path: '/admin/extensions', icon: Sparkles },
     { label: 'Announcements', path: '/admin/announcements', icon: Megaphone },
   ]
 

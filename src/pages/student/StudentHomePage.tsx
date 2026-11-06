@@ -43,6 +43,7 @@ import { StatusBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { CardSkeleton } from '../../components/ui/Skeleton'
+import { FoodLoadingScreen } from '../../components/ui/FoodLoadingScreen'
 import { DirectUpiPaymentModal } from '../../components/payments/DirectUpiPaymentModal'
 import { FoodFeedbackCard } from '../../components/student/FoodFeedbackCard'
 
@@ -104,9 +105,8 @@ export const StudentHomePage: React.FC = () => {
 
   if (isSubLoading || isLeavesLoading) {
     return (
-      <div className="space-y-4 max-w-7xl mx-auto">
-        <CardSkeleton />
-        <CardSkeleton />
+      <div className="max-w-7xl mx-auto py-12">
+        <FoodLoadingScreen fullScreen={false} message="Loading your meal pass..." />
       </div>
     )
   }
@@ -376,7 +376,7 @@ export const StudentHomePage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10">
                     <CalendarOff className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>10+ Day Leave Extension Policy</span>
+                    <span>Daily Leave Extension Policy</span>
                   </div>
                   <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10">
                     <QrCode className="w-4 h-4 text-amber-300 flex-shrink-0" />

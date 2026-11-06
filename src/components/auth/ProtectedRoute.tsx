@@ -2,7 +2,7 @@ import React from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { UserRole } from '../../types'
-import { Loader2 } from 'lucide-react'
+import { FoodLoadingScreen } from '../ui/FoodLoadingScreen'
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[]
@@ -14,12 +14,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, ch
   const location = useLocation()
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-3">
-        <Loader2 className="w-8 h-8 text-[#15803d] animate-spin" />
-        <p className="text-xs text-slate-500 font-medium">Loading MessPro...</p>
-      </div>
-    )
+    return <FoodLoadingScreen message="Loading Hiremat Mess..." />
   }
 
   if (!isAuthenticated || !user) {
@@ -31,8 +26,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, ch
     switch (user.role) {
       case 'BRANCH_ADMIN':
         return <Navigate to="/admin" replace />
-      case 'MESS_STAFF':
-        return <Navigate to="/staff" replace />
       case 'STUDENT':
       default:
         return <Navigate to="/student" replace />

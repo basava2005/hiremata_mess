@@ -240,8 +240,8 @@ export const StudentProfilePage: React.FC = () => {
             {/* Admin WhatsApp Help */}
             <div className="pt-2 border-t border-slate-100 text-center">
               <a
-                href={`https://api.whatsapp.com/send?phone=919876543210&text=${encodeURIComponent(
-                  `ನಮಸ್ಕಾರ Ramesh Sir, I am ${student?.name || user?.name} (+91 ${mobileNumber}). I need help with my Hiremat Mess account.`
+                href={`https://api.whatsapp.com/send?phone=919353198281&text=${encodeURIComponent(
+                  `ನಮಸ್ಕಾರ Admin, I am ${student?.name || user?.name} (+91 ${mobileNumber}). I need help with my Hiremat Mess account.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

@@ -92,6 +92,9 @@ export const AdminLeavesPage: React.FC = () => {
       )
       queryClient.invalidateQueries({ queryKey: ['adminLeaves'] })
       queryClient.invalidateQueries({ queryKey: ['adminEligibleExtensions'] })
+      queryClient.invalidateQueries({ queryKey: ['adminSubscriptions'] })
+      queryClient.invalidateQueries({ queryKey: ['adminStudents'] })
+      queryClient.invalidateQueries({ queryKey: ['studentSubscription'] })
       setSelectedLeaveForAction(null)
       setActionNote('')
     } finally {
@@ -131,6 +134,9 @@ export const AdminLeavesPage: React.FC = () => {
       })
       queryClient.invalidateQueries({ queryKey: ['adminLeaves'] })
       queryClient.invalidateQueries({ queryKey: ['adminEligibleExtensions'] })
+      queryClient.invalidateQueries({ queryKey: ['adminSubscriptions'] })
+      queryClient.invalidateQueries({ queryKey: ['adminStudents'] })
+      queryClient.invalidateQueries({ queryKey: ['studentSubscription'] })
       setIsAddLeaveModalOpen(false)
       setAddReason('')
       setAddStudentId('')
@@ -352,6 +358,20 @@ export const AdminLeavesPage: React.FC = () => {
                 </p>
               </div>
 
+              {selectedLeaveForAction.action === 'APPROVED' && (
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950">
+                  ⚡ <strong>Auto-Extension:</strong> Approving this leave will automatically extend{' '}
+                  <span className="font-bold text-[#15803d]">
+                    {studentMap.get(selectedLeaveForAction.leave.studentId)?.name || 'student'}
+                  </span>
+                  's pass validity by{' '}
+                  <span className="font-black text-emerald-800">
+                    +{inclusiveDays(selectedLeaveForAction.leave.startDate, selectedLeaveForAction.leave.endDate)} days
+                  </span>
+                  .
+                </div>
+              )}
+
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                   Admin Note (Optional)
@@ -486,7 +506,7 @@ export const AdminLeavesPage: React.FC = () => {
               </div>
 
               <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-900">
-                ✓ Directly approved without advance notice restriction.
+                ⚡ Directly approved: will automatically extend student's pass by <strong>+{computedAdminDays} days</strong>.
               </div>
 
               <div className="flex gap-2 pt-1">

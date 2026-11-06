@@ -13,5 +13,9 @@ pytz>=2024.1
 # Cloud PostgreSQL (Neon.tech, Supabase, Render, Aiven)
 psycopg2-binary>=2.9.9
 
+# WSGI Production Server & Static Files for Render
+gunicorn>=21.2.0
+whitenoise>=6.6.0
+
 # Oracle Database 19c / 21c / 23ai / Cloud ATP
 oracledb>=2.0.0

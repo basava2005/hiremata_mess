@@ -518,7 +518,7 @@ export const AdminStudentsPage: React.FC = () => {
                           {student.mobile && (
                             <a
                               href={`https://api.whatsapp.com/send?phone=91${student.mobile.replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
-                                `ನಮಸ್ಕಾರ ${student.name},\nThis is Hiremat Mess Davangere (BIET Road).\nYour registered account mobile is +91 ${student.mobile}.\n\n📍 BIET Rd, Davangere\n📞 Contact Admin Ramesh Sharma: 9876543210`
+                                `ನಮಸ್ಕಾರ ${student.name},\nThis is Hiremat Mess Davangere (BIET Road).\nYour registered account mobile is +91 ${student.mobile}.\n\n📍 BIET Rd, Davangere\n📞 Contact Admin: 9353198281`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -722,7 +722,7 @@ export const AdminStudentsPage: React.FC = () => {
                   <input
                     type="tel"
                     maxLength={10}
-                    placeholder="9876543210"
+                    placeholder="e.g. 9353198281"
                     value={formMobile}
                     onChange={(e) => {
                       setFormMobile(e.target.value)

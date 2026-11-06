@@ -298,8 +298,8 @@ export const PasswordResetRequestsModal: React.FC<PasswordResetRequestsModalProp
                       <a
                         href={`https://api.whatsapp.com/send?phone=91${req.mobile.replace(/\D/g, '').slice(-10)}&text=${encodeURIComponent(
                           isApproved
-                            ? `ನಮಸ್ಕಾರ ${req.studentName},\nYour Hiremat Mess account password reset request has been APPROVED by Admin Ramesh Sharma.\nYour active password is: ${req.requestedPassword}\n\n📍 BIET Rd, Davangere\n📞 9876543210`
-                            : `ನಮಸ್ಕಾರ ${req.studentName},\nRegarding your Hiremat Mess account password reset request (+91 ${req.mobile})...\n\n📍 BIET Rd, Davangere\n📞 Admin Ramesh Sharma: 9876543210`
+                            ? `ನಮಸ್ಕಾರ ${req.studentName},\nYour Hiremat Mess account password reset request has been APPROVED by Mess Admin.\nYour active password is: ${req.requestedPassword}\n\n📍 BIET Rd, Davangere\n📞 9353198281`
+                            : `ನಮಸ್ಕಾರ ${req.studentName},\nRegarding your Hiremat Mess account password reset request (+91 ${req.mobile})...\n\n📍 BIET Rd, Davangere\n📞 Mess Admin: 9353198281`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"

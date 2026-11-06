@@ -10,7 +10,6 @@ import { LoginPage } from './pages/auth/LoginPage'
 // Layouts
 import { StudentLayout } from './components/layouts/StudentLayout'
 import { AdminLayout } from './components/layouts/AdminLayout'
-import { StaffLayout } from './components/layouts/StaffLayout'
 
 // Student Pages
 import { StudentHomePage } from './pages/student/StudentHomePage'
@@ -25,11 +24,7 @@ import { AdminStudentsPage } from './pages/admin/AdminStudentsPage'
 import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage'
 import { AdminLeavesPage } from './pages/admin/AdminLeavesPage'
 import { AdminExtensionsPage } from './pages/admin/AdminExtensionsPage'
-import { AdminStaffPage } from './pages/admin/AdminStaffPage'
 import { AdminAnnouncementsPage } from './pages/admin/AdminAnnouncementsPage'
-
-// Staff Pages
-import { StaffCheckStatusPage } from './pages/staff/StaffCheckStatusPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,18 +64,10 @@ export function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboardPage />} />
                 <Route path="students" element={<AdminStudentsPage />} />
-                <Route path="staff" element={<AdminStaffPage />} />
                 <Route path="payments" element={<AdminPaymentsPage />} />
                 <Route path="leaves" element={<AdminLeavesPage />} />
                 <Route path="extensions" element={<AdminExtensionsPage />} />
                 <Route path="announcements" element={<AdminAnnouncementsPage />} />
-              </Route>
-            </Route>
-
-            {/* Mess Staff Routes */}
-            <Route element={<ProtectedRoute allowedRoles={['MESS_STAFF']} />}>
-              <Route path="/staff" element={<StaffLayout />}>
-                <Route index element={<StaffCheckStatusPage />} />
               </Route>
             </Route>
 

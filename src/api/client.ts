@@ -61,11 +61,12 @@ apiClient.interceptors.response.use(
 )
 
 /**
- * Helper to simulate mock API delay
+ * Helper to simulate mock API delay (ultra fast response to prevent late loading)
  */
-export async function mockDelay<T>(data: T, delayMs: number = 180): Promise<T> {
+export async function mockDelay<T>(data: T, delayMs: number = 30): Promise<T> {
+  const actualDelay = Math.min(delayMs, 40)
   return new Promise((resolve) => {
-    setTimeout(() => resolve(data), delayMs)
+    setTimeout(() => resolve(data), actualDelay)
   })
 }
 

@@ -16,20 +16,28 @@ export const mockPlan: Plan = {
 
 export const mockUsers: User[] = [
   {
-    id: 'user-admin',
+    id: 'admin-chandan',
     branch_id: BRANCH_ID,
-    mobile: '9876543210',
-    name: 'Ramesh Sharma',
+    mobile: '8431413551',
+    name: 'Chandan Hiremat',
     role: 'BRANCH_ADMIN',
     created_at: '2026-01-01',
   },
   {
-    id: 'user-staff',
+    id: 'admin-punith',
     branch_id: BRANCH_ID,
-    mobile: '9876543211',
-    name: 'Suresh Patil',
-    role: 'MESS_STAFF',
-    created_at: '2026-01-05',
+    mobile: '8073113562',
+    name: 'Punith Hiremat',
+    role: 'BRANCH_ADMIN',
+    created_at: '2026-01-01',
+  },
+  {
+    id: 'admin-basavaraj',
+    branch_id: BRANCH_ID,
+    mobile: '9353198281',
+    name: 'Basavaraj H A',
+    role: 'BRANCH_ADMIN',
+    created_at: '2026-01-01',
   },
 ]
 
