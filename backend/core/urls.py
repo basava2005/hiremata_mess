@@ -6,7 +6,7 @@ from .views import (
     LeavesView, LeaveStatusUpdateView, ExtensionsView,
     EligibleExtensionsView, ReviewExtensionView, NotificationsView,
     RazorpayCreateOrderView, RazorpayVerifyPaymentView, FirebaseRegisterTokenView,
-    StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView
+    StaffView, StaffDetailView, UpiPaymentSubmitView, PasswordChangeView, FoodFeedbackView
 )
 
 urlpatterns = [
@@ -42,5 +42,7 @@ urlpatterns = [
 
     path('notifications', NotificationsView.as_view(), name='notifications_list'),
     path('notifications/fcm-token', FirebaseRegisterTokenView.as_view(), name='fcm_register_token'),
+
+    path('feedback', FoodFeedbackView.as_view(), name='food_feedback'),
 ]
 

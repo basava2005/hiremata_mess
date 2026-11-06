@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Calendar,
   Clock,
@@ -14,12 +14,18 @@ import {
   Bell,
   ChevronRight,
   ShieldCheck,
+  PhoneCall,
+  QrCode,
+  Coffee,
+  Sun,
+  Moon,
+  Heart,
+  BadgeCheck
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { subscriptionsApi } from '../../api/subscriptions'
 import { leavesApi } from '../../api/leaves'
 import { notificationsApi } from '../../api/notifications'
-import { paymentsApi } from '../../api/payments'
 import { plansApi } from '../../api/plans'
 import { formatDate, formatCurrency, getDaysRemaining } from '../../lib/dates'
 import { checkLeaveEligibility } from '../../lib/eligibility'
@@ -29,20 +35,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { CardSkeleton } from '../../components/ui/Skeleton'
 import { Link } from 'react-router-dom'
 import { DirectUpiPaymentModal } from '../../components/payments/DirectUpiPaymentModal'
+import { FoodFeedbackCard } from '../../components/student/FoodFeedbackCard'
 
 export const StudentHomePage: React.FC = () => {
   const { user, student } = useAuth()
   const queryClient = useQueryClient()
   const studentId = student?.id || user?.studentId || 'stud-01'
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false)
-  const [isRenewing, setIsRenewing] = useState(false)
-  const [renewSuccessMessage, setRenewSuccessMessage] = useState<string | null>(null)
 
   // 1. Fetch Student Subscription
   const {
     data: subscription,
     isLoading: isSubLoading,
-    refetch: refetchSub,
   } = useQuery({
     queryKey: ['studentSubscription', studentId],
     queryFn: () => subscriptionsApi.getStudentSubscription(studentId),
@@ -67,7 +71,7 @@ export const StudentHomePage: React.FC = () => {
     queryFn: () => notificationsApi.getNotifications(user?.id),
   })
 
-  // Calculate leave eligibility based on verified business rules
+  // Calculate leave eligibility
   const eligibility = subscription
     ? checkLeaveEligibility(
         { startDate: subscription.startDate, lastDate: subscription.lastDate },
@@ -83,32 +87,11 @@ export const StudentHomePage: React.FC = () => {
       }
 
   const daysRemaining = subscription ? getDaysRemaining(subscription.lastDate) : 0
-
-  // Quick Mock Renew Handler
-  const handleMockRenew = async (outcome: 'SUCCESS' | 'FAILED' = 'SUCCESS') => {
-    setIsRenewing(true)
-    setRenewSuccessMessage(null)
-    try {
-      const res = await paymentsApi.initiateOnlinePayment(studentId, 3500, outcome)
-      if (res.status === 'SUCCESS') {
-        setRenewSuccessMessage('Subscription successfully renewed for 30 days!')
-        queryClient.invalidateQueries({ queryKey: ['studentSubscription', studentId] })
-        queryClient.invalidateQueries({ queryKey: ['studentPayments', studentId] })
-        setTimeout(() => {
-          setIsRenewModalOpen(false)
-          setRenewSuccessMessage(null)
-        }, 1500)
-      } else {
-        alert('Payment was marked as failed.')
-      }
-    } finally {
-      setIsRenewing(false)
-    }
-  }
+  const isPassActive = subscription && subscription.status === 'ACTIVE'
 
   if (isSubLoading || isLeavesLoading) {
     return (
-      <div className="space-y-4 max-w-lg mx-auto">
+      <div className="space-y-4 max-w-2xl mx-auto">
         <CardSkeleton />
         <CardSkeleton />
       </div>
@@ -116,119 +99,298 @@ export const StudentHomePage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-5 max-w-lg mx-auto pb-4">
-      {/* Welcome Greeting */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Hi, {student?.name || user?.name || 'Student'} 👋
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500">Welcome to your MessPro dashboard</p>
+    <div className="space-y-6 max-w-2xl mx-auto pb-8">
+      {/* 1. Header Greeting & Mess Profile */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-emerald-900/20 flex-shrink-0">
+            {(student?.name || user?.name || 'S').charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                Hi, {student?.name || user?.name || 'Student'} 👋
+              </h2>
+              {isPassActive && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-700" />
+                  Active Pass
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Hiremat Mess (ಹಿರೇಮಠ್ ಮೆಸ್) • BIET Rd, Davangere • Mobile: {user?.mobile || student?.mobile}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[#15803d] text-xs font-medium">
-          <Utensils className="w-3.5 h-3.5" />
-          <span>Active Mess Member</span>
+
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <a
+            href="tel:9876543210"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors border border-slate-200"
+            title="Call Ramesh Sharma (Mess Admin)"
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Call Admin</span>
+          </a>
+          <button
+            onClick={() => setIsRenewModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#15803d] hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
+          >
+            <QrCode className="w-3.5 h-3.5" />
+            <span>UPI Pay</span>
+          </button>
         </div>
       </div>
 
-      {/* 1. Subscription Card */}
-      {subscription ? (
-        <Card className="relative overflow-hidden border-emerald-200/80 shadow-md bg-gradient-to-br from-white via-white to-emerald-50/30">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+      {/* 2. Digital Mess Pass / Membership Card */}
+      {isPassActive ? (
+        /* ACTIVE MEMBERSHIP DIGITAL CARD */
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white p-5 sm:p-6 shadow-xl border border-emerald-700/60">
+          {/* Subtle Decorative Pattern */}
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                  Current Subscription
+          {/* Card Header */}
+          <div className="flex items-start justify-between relative z-10">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] tracking-widest font-black uppercase text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
+                  DIGITAL MESS PASS
                 </span>
-                <CardTitle className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
-                  {currentPlan?.name || 'Standard Monthly Plan'}
-                </CardTitle>
-                <CardDescription className="text-xs text-slate-600 font-medium">
-                  {currentPlan?.mealsLabel || 'Lunch + Dinner'} • {formatCurrency(currentPlan?.price || 3500)} / month
-                </CardDescription>
+                <span className="text-xs text-emerald-200 font-medium">
+                  Pure Veg 100%
+                </span>
               </div>
-              <StatusBadge variant={subscription.status}>
-                {subscription.status.replace('_', ' ')}
-              </StatusBadge>
+              <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight mt-1.5 text-white">
+                Hiremat Mess Davanagere
+              </h3>
+              <p className="text-xs text-emerald-200/90 font-medium">
+                {currentPlan?.name || 'Standard Monthly Plan'} • ₹3,500/mo
+              </p>
             </div>
-          </CardHeader>
 
-          <CardContent className="space-y-4 pt-1">
-            {/* Days Left Highlight Card */}
-            <div className="rounded-xl bg-slate-900 text-white p-4 flex items-center justify-between shadow-inner">
-              <div className="space-y-0.5">
-                <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
-                  Days Remaining
+            <StatusBadge variant={subscription.status}>
+              {subscription.status.replace('_', ' ')}
+            </StatusBadge>
+          </div>
+
+          {/* Days Left Bar */}
+          <div className="mt-5 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl sm:text-4xl font-black text-amber-300 tracking-tight">
+                {daysRemaining}
+              </span>
+              <div className="text-xs text-slate-200">
+                <span className="font-bold text-white block uppercase tracking-wide">
+                  {daysRemaining === 1 ? 'Day Remaining' : 'Days Remaining'}
                 </span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
-                    {daysRemaining}
-                  </span>
-                  <span className="text-xs text-slate-300">
-                    {daysRemaining === 1 ? 'day left' : 'days left'}
-                  </span>
+                <span>Active until {formatDate(subscription.lastDate)}</span>
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              onClick={() => setIsRenewModalOpen(true)}
+              className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-lg border-0 self-start sm:self-center transition-transform active:scale-95"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-slate-950" />
+              Direct UPI Renew (₹3,500)
+            </Button>
+          </div>
+
+          {/* Included Meals & Dates */}
+          <div className="mt-4 pt-4 border-t border-white/15 grid grid-cols-2 sm:grid-cols-3 gap-3 relative z-10 text-xs">
+            <div>
+              <span className="text-[10px] text-emerald-300 uppercase font-semibold block">Valid From</span>
+              <span className="font-bold text-white text-sm">{formatDate(subscription.startDate)}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-emerald-300 uppercase font-semibold block">Valid Till</span>
+              <span className="font-bold text-white text-sm">{formatDate(subscription.lastDate)}</span>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <span className="text-[10px] text-emerald-300 uppercase font-semibold block">Meals Covered</span>
+              <span className="font-semibold text-emerald-100 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-amber-300 inline" />
+                Lunch + Dinner + Special
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* NO ACTIVE SUBSCRIPTION - LUXURY INVITATION / ACTIVATION PASS */
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-900 text-white p-6 shadow-xl border border-emerald-700/50">
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-md bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                  MEMBERSHIP PASS
+                </span>
+                <span className="text-xs text-emerald-300 font-semibold">
+                  Pure Veg Davanagere Style
+                </span>
+              </div>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-medium">
+                Pass Inactive
+              </span>
+            </div>
+
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Hiremat Mess 30-Day Pure Veg Pass
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+                Enjoy unlimited authentic homestyle food with soft chapatis, tasty saaru, special palya, and Sunday Bele Holige.
+              </p>
+            </div>
+
+            {/* Perks grid */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <Utensils className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>Unlimited Lunch & Dinner</span>
+              </div>
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <Sparkles className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                <span>Sunday Bele Holige Feast</span>
+              </div>
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <CalendarOff className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>10+ Day Leave Extension Policy</span>
+              </div>
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10">
+                <QrCode className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                <span>0% Gateway Fees via Direct UPI</span>
+              </div>
+            </div>
+
+            {/* Price & Activate CTA */}
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Monthly Plan Fee</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-amber-300">₹3,500</span>
+                  <span className="text-xs text-slate-300 font-medium">/ 30 Days</span>
                 </div>
               </div>
 
               <Button
-                size="sm"
                 onClick={() => setIsRenewModalOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-3.5 py-2 rounded-xl shadow"
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm px-6 py-3 rounded-xl shadow-lg border-0 transition-transform active:scale-95"
               >
-                <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                Renew Plan
+                <QrCode className="w-4 h-4 mr-2 text-slate-950" />
+                Activate Pass via Direct UPI (₹3,500)
               </Button>
             </div>
-
-            {/* Dates Grid */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Started On</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-1">
-                  {formatDate(subscription.startDate)}
-                </p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
-                  <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Last Included Date</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-1">
-                  {formatDate(subscription.lastDate)}
-                </p>
-              </div>
-            </div>
-
-            {subscription.status === 'EXPIRING_SOON' && (
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                <span>
-                  Your subscription expires in {daysRemaining} days. Renew now to avoid interruption in meal service.
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="p-6 text-center border-dashed">
-          <p className="text-sm font-medium text-slate-600">No active subscription found.</p>
-          <Button
-            size="sm"
-            onClick={() => setIsRenewModalOpen(true)}
-            className="mt-3 bg-[#15803d]"
-          >
-            Subscribe Now ({formatCurrency(3500)})
-          </Button>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* 2. Eligibility Progress Card ("6 of 10 leave days") */}
+      {/* 3. Daily Meal Menu & Timings (ಇಂದಿನ ಮೆನು) */}
+      <Card className="border-emerald-200/80 shadow-sm bg-gradient-to-br from-white via-white to-emerald-50/20 overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#15803d] flex items-center justify-center">
+                <Utensils className="w-4 h-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  Daily Menu & Timings
+                  <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
+                    ಇಂದಿನ ಮೆನು
+                  </span>
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Hiremat Mess Davanagere • 100% Homestyle Pure Veg
+                </CardDescription>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-lg">
+              BIET Road
+            </span>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-3 pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {/* Breakfast */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700">
+                  <Coffee className="w-3.5 h-3.5" />
+                  <span>Breakfast</span>
+                </div>
+                <span className="text-[10px] text-slate-400">7:30 - 10:00 AM</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-800">
+                Mandakki Oggarne & Mirchi / Hot Dosa + Tea
+              </p>
+              <p className="text-[11px] text-slate-500">
+                ಉಪಾಹಾರ & ಬಿಸಿ ಚಹಾ
+              </p>
+            </div>
+
+            {/* Lunch */}
+            <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                  <Sun className="w-3.5 h-3.5" />
+                  <span>Lunch (Unlimited)</span>
+                </div>
+                <span className="text-[10px] text-emerald-700 font-medium">12:30 - 2:30 PM</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-900">
+                Hot Chapatis, Ennegayi / Kaalu Palya, Saaru, Rice & Curd
+              </p>
+              <p className="text-[11px] text-slate-500">
+                ಮಧ್ಯಾಹ್ನದ ಊಟ (ಅನ್‌ಲಿಮಿಟೆಡ್)
+              </p>
+            </div>
+
+            {/* Dinner */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700">
+                  <Moon className="w-3.5 h-3.5" />
+                  <span>Dinner</span>
+                </div>
+                <span className="text-[10px] text-slate-400">7:30 - 9:30 PM</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-800">
+                Soft Chapatis, Mixed Veg Sabzi, Dal Rasam & Rice
+              </p>
+              <p className="text-[11px] text-slate-500">
+                ರಾತ್ರಿ ಊಟ
+              </p>
+            </div>
+          </div>
+
+          {/* Sunday Special Banner */}
+          <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🥞</span>
+              <span>
+                <strong>Sunday Special:</strong> Authentic Davanagere Bele Holige with Pure Desi Ghee & Majjige!
+              </span>
+            </div>
+            <span className="text-[10px] font-bold bg-amber-200/80 px-2 py-0.5 rounded text-amber-900">
+              ಭಾನುವಾರ ವಿಶೇಷ
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 4. FOOD FEEDBACK & RATING (NEW FEATURE) */}
+      <FoodFeedbackCard
+        studentId={studentId}
+        studentName={student?.name || user?.name}
+      />
+
+      {/* 5. Extension Eligibility Progress Card */}
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -262,7 +424,6 @@ export const StudentHomePage: React.FC = () => {
               </span>
             </div>
 
-            {/* Custom rounded progress bar */}
             <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
@@ -283,7 +444,7 @@ export const StudentHomePage: React.FC = () => {
               <div className="flex items-start gap-2 text-emerald-800 font-medium">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                 <span>
-                  🎉 You are eligible for an extension! You have {eligibility.eligibleDays} eligible consecutive leave days. Your branch admin will review and extend your subscription.
+                  🎉 You are eligible for an extension! You have {eligibility.eligibleDays} eligible consecutive leave days. Your branch admin will extend your subscription end date.
                 </span>
               </div>
             ) : (
@@ -294,7 +455,7 @@ export const StudentHomePage: React.FC = () => {
                   </span>
                 ) : (
                   <span>
-                    Take at least 10 consecutive approved leave days to become eligible for an extension.
+                    Take at least 10 consecutive approved leave days to become eligible for subscription extensions.
                   </span>
                 )}
               </p>
@@ -321,14 +482,14 @@ export const StudentHomePage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 3. Quick Action Shortcuts */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* 6. Quick Action Shortcuts Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Link
           to="/student/leaves"
-          className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <CalendarOff className="w-4 h-4" />
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <CalendarOff className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-bold text-slate-800">Apply Leave</p>
@@ -338,19 +499,33 @@ export const StudentHomePage: React.FC = () => {
 
         <Link
           to="/student/payments"
-          className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group"
+          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#15803d] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <CreditCard className="w-4 h-4" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#15803d] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <CreditCard className="w-5 h-5" />
           </div>
           <div>
             <p className="text-xs font-bold text-slate-800">Payment Receipts</p>
-            <p className="text-[10px] text-slate-500">View & print</p>
+            <p className="text-[10px] text-slate-500">Direct UPI receipts</p>
           </div>
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsRenewModalOpen(true)}
+          className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm hover:border-[#15803d]/40 hover:bg-emerald-50/30 transition-all flex items-center gap-3 group text-left col-span-2 sm:col-span-1"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <QrCode className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-800">Direct UPI Pay</p>
+            <p className="text-[10px] text-slate-500">Scan QR & enter UTR</p>
+          </div>
+        </button>
       </div>
 
-      {/* 4. Latest Notifications */}
+      {/* 7. Latest Notifications */}
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -396,31 +571,7 @@ export const StudentHomePage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 5. Mess Timings Banner */}
-      <div className="rounded-xl p-4 bg-emerald-950 text-white shadow-sm flex items-center justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-            <Utensils className="w-3.5 h-3.5" />
-            <span>Hiremat Mess Davanagere Daily Schedule</span>
-          </div>
-          <div className="text-xs text-slate-300 space-y-0.5">
-            <p>• <strong>Breakfast + Tea:</strong> 7:30 AM - 10:00 AM (Mandakki Mirchi / Dosa / Paddu)</p>
-            <p>• <strong>Lunch (Chapati Meals):</strong> 12:30 PM - 2:30 PM (Unlimited Homestyle Meals)</p>
-            <p>• <strong>Dinner:</strong> 7:30 PM - 9:30 PM (Hot Chapati Dinner)</p>
-            <p>• <strong>Sunday Special:</strong> Bele Holige Feast with Desi Ghee</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <span className="text-[10px] text-emerald-300 bg-emerald-900 px-2 py-1 rounded-md border border-emerald-800 font-bold block">
-            100% Pure Veg
-          </span>
-          <span className="text-[10px] text-slate-400 mt-1 block">
-            Davanagere, KA
-          </span>
-        </div>
-      </div>
-
-      {/* Direct UPI Payment Modal for Renewal (0% Gateway Fee, 0% GST) */}
+      {/* Direct UPI Payment Modal (0% Gateway Fee, 0% GST) */}
       <DirectUpiPaymentModal
         open={isRenewModalOpen}
         onClose={() => setIsRenewModalOpen(false)}
@@ -438,4 +589,3 @@ export const StudentHomePage: React.FC = () => {
     </div>
   )
 }
-

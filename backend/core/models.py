@@ -151,3 +151,16 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} -> {self.user_id}"
+
+class FoodFeedback(models.Model):
+    id = models.CharField(max_length=64, primary_key=True)
+    branch_id = models.CharField(max_length=64, default='branch-main-01')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='feedbacks')
+    meal_type = models.CharField(max_length=30)  # BREAKFAST, LUNCH, DINNER
+    rating = models.IntegerField(default=5)     # 1 to 5
+    tags = models.CharField(max_length=255, blank=True, default='')
+    comments = models.TextField(blank=True, default='')
+    created_at = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.name} - {self.meal_type} ({self.rating} stars)"

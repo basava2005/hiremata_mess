@@ -51,3 +51,4 @@ export const staffApi = {
     await apiClient.delete(`/staff/${id}`)
   },
 }
+

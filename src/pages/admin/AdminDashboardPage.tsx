@@ -11,6 +11,8 @@ import {
   TrendingUp,
   ShieldCheck,
   Phone,
+  Star,
+  Utensils,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { studentsApi } from '../../api/students'
@@ -18,6 +20,7 @@ import { subscriptionsApi } from '../../api/subscriptions'
 import { paymentsApi } from '../../api/payments'
 import { leavesApi } from '../../api/leaves'
 import { extensionsApi } from '../../api/extensions'
+import { getFoodFeedbacks } from '../../api/feedback'
 import { formatCurrency, formatDate, getDaysRemaining } from '../../lib/dates'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { StatusBadge } from '../../components/ui/Badge'
@@ -54,6 +57,17 @@ export const AdminDashboardPage: React.FC = () => {
     queryKey: ['adminEligibleExtensions'],
     queryFn: () => extensionsApi.getEligibleStudents(),
   })
+
+  // 6. Fetch Food Feedbacks
+  const { data: foodFeedbacks = [] } = useQuery({
+    queryKey: ['adminFoodFeedbacks'],
+    queryFn: () => getFoodFeedbacks(),
+  })
+
+  const avgRating =
+    foodFeedbacks.length > 0
+      ? (foodFeedbacks.reduce((sum, f) => sum + f.rating, 0) / foodFeedbacks.length).toFixed(1)
+      : '5.0'
 
   const isLoading =
     isStudentsLoading || isSubsLoading || isPaymentsLoading || isLeavesLoading || isEligibleLoading
@@ -296,6 +310,71 @@ export const AdminDashboardPage: React.FC = () => {
                   <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                 </Button>
               </Link>
+            </CardContent>
+          </Card>
+
+          {/* Student Food Feedback Summary */}
+          <Card className="border-amber-200/80 bg-gradient-to-b from-amber-50/40 via-white to-white">
+            <CardHeader className="pb-3 border-b border-amber-100">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Utensils className="w-4 h-4 text-emerald-600" />
+                  <span>Student Food Feedback</span>
+                </CardTitle>
+                <div className="flex items-center gap-1 bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full text-xs font-bold border border-amber-300">
+                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  <span>{avgRating} / 5.0</span>
+                </div>
+              </div>
+              <CardDescription className="text-xs text-slate-500">
+                Daily taste & meal ratings from registered mess members
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="p-3.5 space-y-2.5">
+              {foodFeedbacks.length === 0 ? (
+                <div className="p-4 text-center text-xs text-slate-500">
+                  No food feedback submitted yet by students.
+                </div>
+              ) : (
+                foodFeedbacks.slice(0, 3).map((fb) => (
+                  <div
+                    key={fb.id}
+                    className="p-3 rounded-xl bg-white border border-amber-100 shadow-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-slate-900">
+                          {fb.studentName || 'Student'}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                          {fb.mealType}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            className={`w-3 h-3 ${
+                              s <= fb.rating ? 'fill-amber-400 text-amber-500' : 'text-slate-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {fb.tags && (
+                      <p className="text-[11px] text-emerald-800 font-medium">
+                        {fb.tags}
+                      </p>
+                    )}
+                    {fb.comments && (
+                      <p className="text-[11px] text-slate-600 italic">
+                        "{fb.comments}"
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>

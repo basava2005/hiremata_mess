@@ -4,11 +4,11 @@ from rest_framework import status
 from datetime import date, timedelta
 import random
 
-from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification
+from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification, FoodFeedback
 from .serializers import (
     UserAccountSerializer, StudentSerializer, PlanSerializer,
     SubscriptionSerializer, PaymentSerializer, LeaveRequestSerializer,
-    LeaveExtensionSerializer, NotificationSerializer
+    LeaveExtensionSerializer, NotificationSerializer, FoodFeedbackSerializer
 )
 from .dates import calculate_last_date, inclusive_days, get_today_ist, get_subscription_status
 from .eligibility import check_leave_eligibility
@@ -584,3 +584,39 @@ class UpiPaymentSubmitView(APIView):
         )
 
         return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+
+class FoodFeedbackView(APIView):
+    def get(self, request):
+        student_id = request.query_params.get('studentId')
+        if student_id:
+            feedbacks = FoodFeedback.objects.filter(student_id=student_id).order_by('-created_at')
+        else:
+            feedbacks = FoodFeedback.objects.all().order_by('-created_at')[:50]
+        return Response(FoodFeedbackSerializer(feedbacks, many=True).data)
+
+    def post(self, request):
+        student_id = request.data.get('studentId')
+        meal_type = request.data.get('mealType', 'LUNCH')
+        rating = int(request.data.get('rating', 5))
+        tags = request.data.get('tags', '')
+        comments = request.data.get('comments', '').strip()
+
+        student = Student.objects.filter(id=student_id).first()
+        if not student:
+            return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if rating < 1 or rating > 5:
+            return Response({'detail': 'Rating must be between 1 and 5 stars.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        feedback_id = f"fb-{random.randint(100000, 999999)}"
+        feedback = FoodFeedback.objects.create(
+            id=feedback_id,
+            branch_id=student.branch_id or 'branch-main-01',
+            student=student,
+            meal_type=meal_type,
+            rating=rating,
+            tags=tags,
+            comments=comments
+        )
+        return Response(FoodFeedbackSerializer(feedback).data, status=status.HTTP_201_CREATED)
+

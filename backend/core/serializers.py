@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification
+from .models import UserAccount, Student, Plan, Subscription, Payment, LeaveRequest, LeaveExtension, Notification, FoodFeedback
 from .dates import get_subscription_status
 
 class UserAccountSerializer(serializers.ModelSerializer):
@@ -91,4 +91,18 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ['id', 'branch_id', 'userId', 'title', 'message', 'type', 'isRead', 'created_at']
+
+class FoodFeedbackSerializer(serializers.ModelSerializer):
+    studentId = serializers.CharField(source='student_id')
+    studentName = serializers.SerializerMethodField()
+    mealType = serializers.CharField(source='meal_type')
+    createdAt = serializers.DateField(source='created_at', read_only=True)
+
+    class Meta:
+        model = FoodFeedback
+        fields = ['id', 'branch_id', 'studentId', 'studentName', 'mealType', 'rating', 'tags', 'comments', 'createdAt']
+
+    def get_studentName(self, obj):
+        return obj.student.name if obj.student else ''
+
 

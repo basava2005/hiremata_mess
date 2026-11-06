@@ -7,4 +7,6 @@ export * from './payments'
 export * from './leaves'
 export * from './extensions'
 export * from './notifications'
+export * from './staff'
+export * from './feedback'
 
