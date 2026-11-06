@@ -1,7 +1,13 @@
 import axios, { AxiosInstance } from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
-export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== 'false'
+// Auto-normalize API Base URL so whether user configured with or without '/api/v1', it works seamlessly
+let envApiUrl = (import.meta.env.VITE_API_URL || '/api/v1').trim()
+if (envApiUrl.startsWith('http') && !envApiUrl.includes('/api/v1')) {
+  envApiUrl = envApiUrl.replace(/\/+$/, '') + '/api/v1'
+}
+
+const API_BASE_URL = envApiUrl
+export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true'
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

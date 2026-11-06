@@ -25,6 +25,7 @@ import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage'
 import { AdminLeavesPage } from './pages/admin/AdminLeavesPage'
 import { AdminExtensionsPage } from './pages/admin/AdminExtensionsPage'
 import { AdminAnnouncementsPage } from './pages/admin/AdminAnnouncementsPage'
+import { InstallAppBanner } from './components/ui/InstallAppBanner'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +75,7 @@ export function App() {
             {/* Fallback to Landing Page */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <InstallAppBanner />
         </BrowserRouter>
         <Toaster position="top-right" richColors />
       </AuthProvider>
