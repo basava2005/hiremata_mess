@@ -21,6 +21,25 @@ from .sms_service import send_otp_sms, send_renewal_reminder_sms, get_whatsapp_u
 from .firebase_service import notify_subscription_expiring, notify_payment_received
 
 
+class RootApiStatusView(APIView):
+    def get(self, request):
+        return Response({
+            'status': 'online',
+            'service': 'Hiremat Mess Backend API (MessPro)',
+            'location': 'Anjaneya Layout 5th Cross, BIET Rd, Davangere, Karnataka 577004',
+            'admins': ['Chandan Hiremat (8431413551)', 'Punith Hiremat (8073113562)'],
+            'developer': 'Basavaraj H A (9353198281)',
+            'api_base': '/api/v1/',
+            'endpoints': {
+                'login': '/api/v1/auth/login',
+                'students': '/api/v1/students',
+                'subscriptions': '/api/v1/subscriptions',
+                'payments': '/api/v1/payments',
+                'leaves': '/api/v1/leaves',
+                'plans': '/api/v1/plans'
+            }
+        })
+
 class LoginView(APIView):
     def post(self, request):
         mobile = str(request.data.get('mobile', '')).strip()

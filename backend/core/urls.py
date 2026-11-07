@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    LoginView, CurrentUserView, StudentsView, StudentDetailView,
+    RootApiStatusView, LoginView, CurrentUserView, StudentsView, StudentDetailView,
     StudentDeactivateView, StudentActivateView, PlansView,
     SubscriptionsView, StudentSubscriptionView, PaymentsView,
     LeavesView, LeaveStatusUpdateView, ExtensionsView,
@@ -14,6 +14,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('', RootApiStatusView.as_view(), name='api_root_status'),
     path('auth/login', LoginView.as_view(), name='login'),
     path('auth/me', CurrentUserView.as_view(), name='current_user'),
     path('auth/password/change', PasswordChangeView.as_view(), name='password_change'),
