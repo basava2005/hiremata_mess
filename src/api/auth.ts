@@ -128,7 +128,7 @@ export const authApi = {
       }
       reqs.unshift(newReq)
       sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
-      const whatsappUrl = `https://api.whatsapp.com/send?phone=919353198281&text=${encodeURIComponent(
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=918431413551&text=${encodeURIComponent(
         `ನಮಸ್ಕಾರ Admin, I have submitted a password reset request for my Hiremat Mess account (+91 ${mobile}). Please verify and accept.`
       )}`
       return mockDelay({
@@ -187,7 +187,7 @@ export const authApi = {
       sessionStorage.setItem('messpro_reset_requests', JSON.stringify(reqs))
 
       const whatsappUrl = `https://api.whatsapp.com/send?phone=91${target.mobile}&text=${encodeURIComponent(
-        `ನಮಸ್ಕಾರ ${target.studentName},\nYour Hiremat Mess password reset request has been APPROVED by Mess Admin.\nYour new password is: ${finalPwd}\n\n📍 BIET Rd, Davangere\n📞 9353198281`
+        `ನಮಸ್ಕಾರ ${target.studentName},\nYour Hiremat Mess password reset request has been APPROVED by Mess Admin.\nYour new password is: ${finalPwd}\n\n📍 BIET Rd, Davangere\n📞 Chandan: 8431413551 | Punith: 8073113562`
       )}`
 
       return mockDelay({

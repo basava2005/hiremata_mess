@@ -15,7 +15,7 @@ TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '').strip()
 TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '').strip()
 
 MESS_NAME = "Hiremat Mess Davangere"
-MESS_CONTACT = "9353198281"
+MESS_CONTACT = "8431413551 / 8073113562"
 
 def get_fast2sms_key() -> str:
     key = os.environ.get('FAST2SMS_API_KEY', '').strip()

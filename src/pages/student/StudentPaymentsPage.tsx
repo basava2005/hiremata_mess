@@ -56,7 +56,7 @@ export const StudentPaymentsPage: React.FC = () => {
       `Date: ${formatDate(payment.date)}\n` +
       `Status: VERIFIED & ACTIVE ✓\n\n` +
       `Hiremat Mess Davangere • BIET Road, Davangere\n` +
-      `Contact Admin: 9353198281`
+      `Contact Admins: Chandan (8431413551) / Punith (8073113562)`
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
@@ -224,7 +224,7 @@ export const StudentPaymentsPage: React.FC = () => {
                 Anjaneya Layout 5th Cross, BIET Rd, Davangere 577004
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
-                Phone: +91 9353198281 • UPI: 9353198281@ybl
+                Phone: +91 8431413551 / +91 8073113562 • UPI: 9353198281@ybl
               </p>
             </div>
 

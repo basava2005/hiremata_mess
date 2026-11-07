@@ -244,13 +244,25 @@ export const LandingPage: React.FC = () => {
               </span>
               <span>•</span>
               <a
-                href="https://api.whatsapp.com/send?phone=919353198281&text=Hello%20Admin%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+                href="https://api.whatsapp.com/send?phone=918431413551&text=Hello%20Chandan%20Hiremat%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white flex items-center gap-1.5 transition-colors font-semibold"
+                title="Chat with Chandan Hiremat"
               >
                 <MessageSquare className="w-3 h-3 text-[#25D366] fill-[#25D366]" />
-                <span>Mess Admin: 9353198281</span>
+                <span>Chandan: 8431413551</span>
+              </a>
+              <span>•</span>
+              <a
+                href="https://api.whatsapp.com/send?phone=918073113562&text=Hello%20Punith%20Hiremat%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white flex items-center gap-1.5 transition-colors font-semibold"
+                title="Chat with Punith Hiremat"
+              >
+                <MessageSquare className="w-3 h-3 text-[#25D366] fill-[#25D366]" />
+                <span>Punith: 8073113562</span>
               </a>
             </div>
           </div>
@@ -318,11 +330,11 @@ export const LandingPage: React.FC = () => {
           <div className="flex items-center gap-2.5">
             {/* Quick WhatsApp Link for Desktop */}
             <a
-              href="https://api.whatsapp.com/send?phone=919353198281&text=Hello%20Admin%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+              href="https://api.whatsapp.com/send?phone=918431413551&text=Hello%20Chandan%20Hiremat%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 px-3.5 py-2 rounded-full transition-all active:scale-95"
-              title="WhatsApp Mess Admin"
+              title="WhatsApp Mess Admin Chandan Hiremat"
             >
               <MessageSquare className="w-3.5 h-3.5 fill-[#25D366] text-[#25D366]" />
               <span>Enquire</span>
@@ -399,13 +411,13 @@ export const LandingPage: React.FC = () => {
 
             <div className="pt-2 flex flex-col gap-2">
               <a
-                href="https://api.whatsapp.com/send?phone=919353198281&text=Hello%20Admin%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
+                href="https://api.whatsapp.com/send?phone=918431413551&text=Hello%20Chandan%20Hiremat%2C%20I%20have%20an%20inquiry%20about%20Hiremat%20Mess%20Davanagere."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 px-3 rounded-xl"
               >
                 <MessageSquare className="w-4 h-4 fill-[#25D366] text-[#25D366]" />
-                <span>WhatsApp Admin (9353198281)</span>
+                <span>WhatsApp Admins (8431413551 / 8073113562)</span>
               </a>
 
               <Link to="/login" onClick={() => setMobileNavOpen(false)}>
@@ -1007,10 +1019,10 @@ export const LandingPage: React.FC = () => {
                   </Link>
 
                   <a
-                    href="tel:+919353198281"
+                    href="tel:+918431413551"
                     className="w-full sm:w-auto text-xs font-semibold text-slate-600 hover:text-[#15803d] text-center px-4 py-2"
                   >
-                    Davanagere Help: +91 93531 98281
+                    Davanagere Admins: 8431413551 / 8073113562
                   </a>
                 </div>
               </div>
@@ -1117,7 +1129,7 @@ export const LandingPage: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span>Call or WhatsApp: +91 98765 43210</span>
+                  <span>Call or WhatsApp: Chandan (8431413551) • Punith (8073113562)</span>
                 </div>
 
                 <div className="flex items-center gap-3">

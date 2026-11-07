@@ -233,8 +233,8 @@ export const LoginPage: React.FC = () => {
                   maxLength={10}
                   placeholder={
                     activePortalTab === 'STUDENT'
-                      ? 'e.g. 9353198281'
-                      : 'e.g. 8431413551 / 8073113562 / 9353198281'
+                      ? 'e.g. 9876543210'
+                      : 'e.g. 8431413551 / 8073113562'
                   }
                   {...register('mobile')}
                   className="block w-full pl-16 pr-4 py-3 text-sm font-semibold rounded-2xl border-2 border-slate-200 bg-slate-50/60 focus:bg-white focus:border-[#15803d] focus:ring-4 focus:ring-[#15803d]/15 transition-all placeholder:font-normal placeholder:text-slate-400"
@@ -311,8 +311,12 @@ export const LoginPage: React.FC = () => {
           <MapPin className="w-3.5 h-3.5 text-[#15803d]" />
           <span>Anjaneya Layout 5th Cross, BIET Rd, Davangere, Karnataka 577004</span>
           <span>•</span>
-          <a href="tel:9353198281" className="text-emerald-700 font-bold hover:underline">
-            📞 9353198281
+          <a href="tel:8431413551" className="text-emerald-700 font-bold hover:underline">
+            📞 Chandan: 8431413551
+          </a>
+          <span>•</span>
+          <a href="tel:8073113562" className="text-emerald-700 font-bold hover:underline">
+            📞 Punith: 8073113562
           </a>
         </p>
         <p className="text-[11px] text-slate-400">
@@ -459,13 +463,13 @@ export const LoginPage: React.FC = () => {
                   {/* WhatsApp Admin Direct Link */}
                   <div className="pt-2 border-t border-slate-100 text-center">
                     <a
-                      href="https://api.whatsapp.com/send?phone=919353198281&text=Hello%20Admin,%20I%20am%20a%20student%20at%20Hiremat%20Mess%20Davangere%20and%20need%20help%20with%20my%20password."
+                      href="https://api.whatsapp.com/send?phone=918431413551&text=Hello%20Admin,%20I%20am%20a%20student%20at%20Hiremat%20Mess%20Davangere%20and%20need%20help%20with%20my%20password."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-1.5 text-[11px] text-[#25D366] hover:underline font-semibold"
                     >
                       <MessageSquare className="w-3.5 h-3.5 fill-current" />
-                      <span>Chat with Admin on WhatsApp 📲</span>
+                      <span>Chat with Chandan Hiremat (Admin) on WhatsApp 📲</span>
                     </a>
                   </div>
                 </form>

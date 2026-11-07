@@ -240,7 +240,7 @@ export const StudentProfilePage: React.FC = () => {
             {/* Admin WhatsApp Help */}
             <div className="pt-2 border-t border-slate-100 text-center">
               <a
-                href={`https://api.whatsapp.com/send?phone=919353198281&text=${encodeURIComponent(
+                href={`https://api.whatsapp.com/send?phone=918431413551&text=${encodeURIComponent(
                   `ನಮಸ್ಕಾರ Admin, I am ${student?.name || user?.name} (+91 ${mobileNumber}). I need help with my Hiremat Mess account.`
                 )}`}
                 target="_blank"
@@ -248,7 +248,7 @@ export const StudentProfilePage: React.FC = () => {
                 className="inline-flex items-center justify-center gap-1.5 text-xs text-[#25D366] hover:underline font-semibold"
               >
                 <MessageSquare className="w-3.5 h-3.5 fill-current" />
-                <span>Need Help? Chat with Admin Ramesh Sharma on WhatsApp 📲</span>
+                <span>Need Help? Chat with Chandan Hiremat (Admin) on WhatsApp 📲</span>
               </a>
             </div>
           </form>

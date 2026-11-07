@@ -944,7 +944,7 @@ class PasswordResetRequestSubmitView(APIView):
 
         import urllib.parse
         msg = f"ನಮಸ್ಕಾರ Admin, I have submitted a password reset request for my Hiremat Mess account (+91 {mobile}). Please verify and accept."
-        whatsapp_url = f"https://api.whatsapp.com/send?phone=919353198281&text={urllib.parse.quote(msg)}"
+        whatsapp_url = f"https://api.whatsapp.com/send?phone=918431413551&text={urllib.parse.quote(msg)}"
 
         return Response({
             'success': True,
@@ -999,7 +999,7 @@ class PasswordResetRequestApproveView(APIView):
         )
 
         import urllib.parse
-        msg = f"ನಮಸ್ಕಾರ {reset_req.student_name},\nYour Hiremat Mess Davangere password reset request has been APPROVED by Mess Admin.\nYour new password is: {new_pwd}\n\n📍 BIET Rd, Davangere\n📞 Contact: 9353198281"
+        msg = f"ನಮಸ್ಕಾರ {reset_req.student_name},\nYour Hiremat Mess Davangere password reset request has been APPROVED by Mess Admin.\nYour new password is: {new_pwd}\n\n📍 BIET Rd, Davangere\n📞 Contact Admins: Chandan (8431413551) / Punith (8073113562)"
         whatsapp_url = f"https://api.whatsapp.com/send?phone=91{reset_req.mobile}&text={urllib.parse.quote(msg)}"
 
         return Response({

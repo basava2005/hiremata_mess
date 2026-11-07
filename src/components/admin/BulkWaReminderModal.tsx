@@ -87,10 +87,10 @@ export const BulkWaReminderModal: React.FC<BulkWaReminderModalProps> = ({
     const noteLine = customNote.trim() ? `\n\n📢 Note: ${customNote.trim()}` : ''
 
     if (!sub || days < 0) {
-      return `ನಮಸ್ಕಾರ ${student.name},\n\nYour Hiremat Mess Davangere monthly pass has expired.\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to resume your hot meals.\n\n📍 Hiremat Mess, BIET Road, Davangere\n📞 Contact Admin: 9353198281${noteLine}`
+      return `ನಮಸ್ಕಾರ ${student.name},\n\nYour Hiremat Mess Davangere monthly pass has expired.\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to resume your hot meals.\n\n📍 Hiremat Mess, BIET Road, Davangere\n📞 Contact Admins: Chandan (8431413551) / Punith (8073113562)${noteLine}`
     }
 
-    return `ನಮಸ್ಕಾರ ${student.name},\n\nYour Hiremat Mess Davangere subscription expires in *${days} days* (on ${lastDateStr}).\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to ensure uninterrupted meals.\n\n📍 Hiremat Mess, BIET Road, Davangere\n📞 Contact Admin: 9353198281${noteLine}`
+    return `ನಮಸ್ಕಾರ ${student.name},\n\nYour Hiremat Mess Davangere subscription expires in *${days} days* (on ${lastDateStr}).\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to ensure uninterrupted meals.\n\n📍 Hiremat Mess, BIET Road, Davangere\n📞 Contact Admins: Chandan (8431413551) / Punith (8073113562)${noteLine}`
   }
 
   // Open WhatsApp for single student
@@ -135,7 +135,7 @@ export const BulkWaReminderModal: React.FC<BulkWaReminderModalProps> = ({
   // Copy generic template message
   const handleCopyTemplateMessage = () => {
     const noteLine = customNote.trim() ? `\n\n📢 Note: ${customNote.trim()}` : ''
-    const templateMsg = `ನಮಸ್ಕಾರ [Student Name],\n\nYour Hiremat Mess Davangere monthly pass is expiring soon.\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to continue your hot meals.\n\n📍 Hiremat Mess, BIET Road, Davangere\n📞 Contact Admin: 9353198281${noteLine}`
+    const templateMsg = `ನಮಸ್ಕಾರ [Student Name],\n\nYour Hiremat Mess Davangere monthly pass is expiring soon.\n\nPlease renew via Direct UPI to *9353198281@ybl* (₹3,500 / 30 Days) to continue your hot meals.\n\n📍 Hiremat Mess, BIET Road, Davangere\n📞 Contact Admins: Chandan (8431413551) / Punith (8073113562)${noteLine}`
     navigator.clipboard.writeText(templateMsg)
     setHasCopiedMessage(true)
     toast.success('Copied reminder message template!')

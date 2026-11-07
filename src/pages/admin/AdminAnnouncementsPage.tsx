@@ -112,7 +112,7 @@ export const AdminAnnouncementsPage: React.FC = () => {
       `${ann.message}\n` +
       (ann.effectiveDate ? `\n📅 *Effective Date:* ${formatDate(ann.effectiveDate)}\n` : '\n') +
       `📍 *Location:* Anjaneya Layout 5th Cross, BIET Rd, Davangere\n` +
-      `📞 *Contact Admin Ramesh Sharma:* 9353198281`
+      `📞 *Contact Admins:* Chandan (8431413551) / Punith (8073113562)`
 
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')

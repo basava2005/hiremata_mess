@@ -153,21 +153,29 @@ export const StudentHomePage: React.FC = () => {
         {/* Action Pills */}
         <div className="flex items-center gap-2.5 self-start md:self-center flex-wrap">
           <a
-            href="tel:9353198281"
+            href="tel:8431413551"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors border border-slate-200"
-            title="Call Basavaraj H Arikatti (Mess Admin)"
+            title="Call Chandan Hiremat (Mess Admin)"
           >
             <PhoneCall className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Call Admin</span>
+            <span>Call Chandan (8431413551)</span>
           </a>
           <a
-            href="https://api.whatsapp.com/send?phone=919353198281&text=Hello%20Hiremat%20Mess%20Admin,%20I%20have%20a%20query%20about%20my%20mess%20pass."
+            href="tel:8073113562"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors border border-slate-200"
+            title="Call Punith Hiremat (Mess Admin)"
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Call Punith (8073113562)</span>
+          </a>
+          <a
+            href="https://api.whatsapp.com/send?phone=918431413551&text=Hello%20Hiremat%20Mess%20Admin,%20I%20have%20a%20query%20about%20my%20mess%20pass."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#1ebe5b] text-xs font-bold transition-colors border border-[#25D366]/30"
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>WhatsApp</span>
+            <span>WhatsApp Admin</span>
           </a>
           <button
             onClick={() => setIsRenewModalOpen(true)}
@@ -693,14 +701,25 @@ export const StudentHomePage: React.FC = () => {
                 Anjaneya Layout 5th Cross, BIET Rd, Davangere, Karnataka 577004
               </p>
             </div>
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-              <span>Admin: <strong>Basavaraj H Arikatti</strong></span>
-              <a
-                href="tel:9353198281"
-                className="text-emerald-400 font-bold hover:underline"
-              >
-                9353198281
-              </a>
+            <div className="pt-2 border-t border-slate-800 space-y-1.5 text-xs text-slate-400">
+              <div className="flex items-center justify-between">
+                <span>Mess Admin: <strong>Chandan Hiremat</strong></span>
+                <a
+                  href="tel:8431413551"
+                  className="text-emerald-400 font-bold hover:underline"
+                >
+                  8431413551
+                </a>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Mess Admin: <strong>Punith Hiremat</strong></span>
+                <a
+                  href="tel:8073113562"
+                  className="text-emerald-400 font-bold hover:underline"
+                >
+                  8073113562
+                </a>
+              </div>
             </div>
           </div>
         </div>
