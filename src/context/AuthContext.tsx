@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Student, UserRole, AuthResponse } from '../types'
 import { authApi, LoginCredentials } from '../api/auth'
-import { mockDB } from '../mocks/db'
+import { studentsApi } from '../api/students'
 import { tokenStorage } from '../api/client'
 
 interface AuthContextType {
@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (currentUser) {
         setUser(currentUser)
         if (currentUser.studentId) {
-          const s = mockDB.getStudentById(currentUser.studentId)
+          const s = await studentsApi.getStudentById(currentUser.studentId)
           setStudent(s || null)
         } else {
           setStudent(null)

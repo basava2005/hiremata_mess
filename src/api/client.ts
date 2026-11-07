@@ -21,7 +21,8 @@ if (rawApiUrl.startsWith('http') && !rawApiUrl.includes('/api/v1')) {
 }
 
 const API_BASE_URL = rawApiUrl
-export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true'
+// Hardcode to false so mock data is permanently disabled
+export const USE_MOCKS = false
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

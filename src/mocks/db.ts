@@ -42,33 +42,24 @@ class MockDatabase {
   }
 
   private loadState(): MockDBState {
+    // Purge any legacy demo mock data from browser storage
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        return JSON.parse(stored)
-      }
-    } catch {
-      // Ignore parse/storage errors
-    }
-
-    // Initialize with mock data
-    const computedLeaves = mockLeaves.map((l) => ({
-      ...l,
-      daysCount: inclusiveDays(l.startDate, l.endDate),
-    }))
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem('messpro_mock_db_v2_pune')
+      localStorage.removeItem('messpro_mock_db')
+    } catch {}
 
     const initialState: MockDBState = {
       users: [...mockUsers],
-      students: [...mockStudents],
-      subscriptions: [...mockSubscriptions],
-      payments: [...mockPayments],
-      leaves: computedLeaves,
-      extensions: [...mockExtensions],
-      notifications: [...mockNotifications],
+      students: [],
+      subscriptions: [],
+      payments: [],
+      leaves: [],
+      extensions: [],
+      notifications: [],
       plan: mockPlan,
     }
 
-    this.saveState(initialState)
     return initialState
   }
 
