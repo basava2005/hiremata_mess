@@ -1,9 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="16" fill="#15803d"/>
-  <!-- Leaf accent -->
-  <circle cx="50" cy="14" r="6" fill="#22c55e"/>
-  <!-- Utensils: Fork & Spoon -->
-  <path d="M25 16v10a4 4 0 0 1-4 4v16a2.5 2.5 0 0 1-5 0V30a4 4 0 0 1-4-4V16" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M16 16v7" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M44 16c4 0 7 3.5 7 8 0 3.8-2.5 7-6 7.8V46a2.5 2.5 0 0 1-5 0V31.8c-3.5-.8-6-4-6-7.8 0-4.5 3-8 7-8z" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#0f5132"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background squircle -->
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)"/>
+  
+  <!-- Outer subtle glow -->
+  <circle cx="64" cy="64" r="46" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+  
+  <!-- Golden Thali Plate Border -->
+  <circle cx="64" cy="64" r="42" fill="#14532d" stroke="url(#goldGrad)" stroke-width="4"/>
+  <circle cx="64" cy="64" r="38" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-dasharray="3 2"/>
+
+  <!-- Banana Leaf Base -->
+  <path d="M38 72 C36 50, 52 40, 78 40 C90 40, 92 56, 86 68 C80 80, 54 84, 38 72 Z" fill="url(#leafGrad)"/>
+  <path d="M42 66 Q64 56 86 52" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- South Indian Delicacy: Golden Dosa / Roti Fold -->
+  <path d="M48 58 Q64 44 80 58 Q64 70 48 58 Z" fill="url(#goldGrad)"/>
+
+  <!-- Katori / Bowls (Sambar & Chutney) -->
+  <circle cx="48" cy="74" r="9" fill="#ca8a04" stroke="#fef08a" stroke-width="1.5"/>
+  <circle cx="48" cy="74" r="6" fill="#f97316"/>
+  
+  <circle cx="78" cy="74" r="9" fill="#ca8a04" stroke="#fef08a" stroke-width="1.5"/>
+  <circle cx="78" cy="74" r="6" fill="#f8fafc"/>
+
+  <!-- Tempered mustard seed dots -->
+  <circle cx="77" cy="73" r="1" fill="#334155"/>
+  <circle cx="80" cy="75" r="0.8" fill="#334155"/>
+
+  <!-- Hot Steam Curls -->
+  <path d="M58 36 Q56 30 60 26" stroke="#f8fafc" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M66 34 Q68 28 65 24" stroke="#f8fafc" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
 </svg>

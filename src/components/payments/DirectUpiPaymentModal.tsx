@@ -36,8 +36,8 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
   studentId,
   onPaymentSuccess,
 }) => {
-  const upiId = '9353198281@ybl'
-  const upiName = 'Basavaraj H Arikatti'
+  const upiId = '8073113562-rb2e@ybl'
+  const upiName = 'Punit Veerash Hiremat'
   const note = `Mess Pass - ${studentName}`
 
   const [copied, setCopied] = useState(false)
@@ -192,12 +192,12 @@ export const DirectUpiPaymentModal: React.FC<DirectUpiPaymentModalProps> = ({
                 <div className="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200 flex flex-col items-center max-w-[260px]">
                   <img
                     src="/phonepe-qr.jpg"
-                    alt="PhonePe Accepted Here - Basavaraj H Arikatti"
+                    alt="PhonePe Accepted Here - Punit Veerash Hiremat"
                     className="w-52 h-auto object-contain rounded-xl"
                   />
                   <div className="mt-2 text-center">
-                    <p className="font-bold text-xs text-slate-900">Basavaraj H Arikatti</p>
-                    <p className="text-[10px] text-slate-500 font-mono">9353198281@ybl</p>
+                    <p className="font-bold text-xs text-slate-900">Punit Veerash Hiremat</p>
+                    <p className="text-[10px] text-slate-500 font-mono">8073113562-rb2e@ybl</p>
                   </div>
                 </div>
 

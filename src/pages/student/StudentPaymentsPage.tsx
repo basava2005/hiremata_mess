@@ -224,7 +224,7 @@ export const StudentPaymentsPage: React.FC = () => {
                 Anjaneya Layout 5th Cross, BIET Rd, Davangere 577004
               </p>
               <p className="text-[10px] text-slate-400 font-mono">
-                Phone: +91 8431413551 / +91 8073113562 • UPI: 9353198281@ybl
+                Phone: +91 8431413551 / +91 8073113562 • UPI: 8073113562-rb2e@ybl
               </p>
             </div>
 

@@ -112,22 +112,48 @@ if USE_ORACLE:
 elif DATABASE_URL:
     # 100% Free Cloud Database (e.g. Neon.tech, Supabase, Render, Aiven - NO credit card needed)
     from urllib.parse import urlparse, unquote
-    parsed_url = urlparse(DATABASE_URL)
+    clean_db_url = (
+        DATABASE_URL.strip()
+        .replace('&channel_binding=require', '')
+        .replace('channel_binding=require&', '')
+        .replace('?channel_binding=require', '')
+    )
+    parsed_url = urlparse(clean_db_url)
     engine = 'django.db.backends.postgresql' if parsed_url.scheme in ('postgres', 'postgresql') else 'django.db.backends.mysql'
     
+    hostname = parsed_url.hostname or ''
+    is_neon = 'neon.tech' in hostname
+
+    # In Django management commands (runserver, migrate, check_migrations), Neon's direct endpoint
+    # (without '-pooler') avoids PgBouncer transaction-mode disconnects & SSL EOF drops:
+    import sys
+    is_management_cmd = any(cmd in sys.argv for cmd in ('runserver', 'migrate', 'makemigrations', 'check', 'createsuperuser', 'reset_to_production', 'seed_data'))
+    if is_neon and is_management_cmd and '-pooler' in hostname:
+        hostname = hostname.replace('-pooler', '')
+
+    # Robust TCP keepalives and connect timeout to allow Neon compute to wake up from idle suspend
     pg_options = {}
-    if 'sslmode=require' in DATABASE_URL or 'sslmode=verify-full' in DATABASE_URL:
+    if 'sslmode=require' in clean_db_url or 'sslmode=verify-full' in clean_db_url or is_neon:
         pg_options['sslmode'] = 'require'
+    if is_neon or 'postgres' in engine:
+        pg_options.update({
+            'connect_timeout': 15,
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+        })
 
     DATABASES = {
         'default': {
             'ENGINE': engine,
-            'NAME': parsed_url.path[1:],
+            'NAME': parsed_url.path.lstrip('/'),
             'USER': unquote(parsed_url.username or ''),
             'PASSWORD': unquote(parsed_url.password or ''),
-            'HOST': parsed_url.hostname,
+            'HOST': hostname,
             'PORT': parsed_url.port or (5432 if 'postgres' in engine else 3306),
-            'CONN_MAX_AGE': 600,
+            # CONN_MAX_AGE must be 0 for Neon serverless (Neon drops idle connections after 300s):
+            'CONN_MAX_AGE': 0 if is_neon else 60,
             'CONN_HEALTH_CHECKS': True,
             'DISABLE_SERVER_SIDE_CURSORS': True,
             'OPTIONS': pg_options,
@@ -142,6 +168,8 @@ else:
             'NAME': Path(sqlite_custom_path).resolve() if sqlite_custom_path else BASE_DIR / 'db.sqlite3',
         }
     }
+
+APPEND_SLASH = False
 
 AUTH_PASSWORD_VALIDATORS = []
 
