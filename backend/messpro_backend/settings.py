@@ -127,7 +127,9 @@ elif DATABASE_URL:
             'PASSWORD': unquote(parsed_url.password or ''),
             'HOST': parsed_url.hostname,
             'PORT': parsed_url.port or (5432 if 'postgres' in engine else 3306),
-            'CONN_MAX_AGE': 0,
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+            'DISABLE_SERVER_SIDE_CURSORS': True,
             'OPTIONS': pg_options,
         }
     }

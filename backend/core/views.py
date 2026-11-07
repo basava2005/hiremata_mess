@@ -67,16 +67,18 @@ class CurrentUserView(APIView):
 
 class StudentsView(APIView):
     def get(self, request):
-        students = Student.objects.all()
-        q = request.query_params.get('search', '').lower()
-        if q:
-            students = [s for s in students if q in s.name.lower() or q in s.mobile or q in s.address.lower()]
-
+        from django.db.models import Q
+        students = Student.objects.all().order_by('-created_at')
+        
         status_param = request.query_params.get('status')
         if status_param == 'ACTIVE':
-            students = [s for s in students if s.is_active]
+            students = students.filter(is_active=True)
         elif status_param == 'INACTIVE':
-            students = [s for s in students if not s.is_active]
+            students = students.filter(is_active=False)
+
+        q = request.query_params.get('search', '').strip()
+        if q:
+            students = students.filter(Q(name__icontains=q) | Q(mobile__icontains=q) | Q(address__icontains=q))
 
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
@@ -173,14 +175,14 @@ class PlansView(APIView):
 class SubscriptionsView(APIView):
     def get(self, request):
         student_id = request.query_params.get('studentId')
-        subs = Subscription.objects.all()
+        subs = Subscription.objects.select_related('plan', 'student').all()
         if student_id:
             subs = subs.filter(student_id=student_id)
         return Response(SubscriptionSerializer(subs, many=True).data)
 
 class StudentSubscriptionView(APIView):
     def get(self, request, student_id):
-        sub = Subscription.objects.filter(student_id=student_id).order_by('-last_date').first()
+        sub = Subscription.objects.select_related('plan', 'student').filter(student_id=student_id).order_by('-last_date').first()
         if sub:
             return Response(SubscriptionSerializer(sub).data)
         return Response(None)
@@ -188,7 +190,7 @@ class StudentSubscriptionView(APIView):
 class PaymentsView(APIView):
     def get(self, request):
         student_id = request.query_params.get('studentId')
-        payments = Payment.objects.all().order_by('-date')
+        payments = Payment.objects.select_related('student').all().order_by('-date')
         if student_id:
             payments = payments.filter(student_id=student_id)
         return Response(PaymentSerializer(payments, many=True).data)
@@ -277,7 +279,7 @@ class PaymentsView(APIView):
 class LeavesView(APIView):
     def get(self, request):
         student_id = request.query_params.get('studentId')
-        leaves = LeaveRequest.objects.all().order_by('-start_date')
+        leaves = LeaveRequest.objects.select_related('student').all().order_by('-start_date')
         if student_id:
             leaves = leaves.filter(student_id=student_id)
         return Response(LeaveRequestSerializer(leaves, many=True).data)
@@ -392,7 +394,7 @@ class LeaveStatusUpdateView(APIView):
 class ExtensionsView(APIView):
     def get(self, request):
         student_id = request.query_params.get('studentId')
-        extensions = LeaveExtension.objects.all().order_by('-created_at')
+        extensions = LeaveExtension.objects.select_related('student').all().order_by('-created_at')
         if student_id:
             extensions = extensions.filter(student_id=student_id)
         return Response(LeaveExtensionSerializer(extensions, many=True).data)
@@ -400,19 +402,34 @@ class ExtensionsView(APIView):
 class EligibleExtensionsView(APIView):
     def get(self, request):
         today = get_today_ist()
-        students = Student.objects.filter(is_active=True)
-        eligible_items = []
+        students = list(Student.objects.filter(is_active=True))
+        if not students:
+            return Response([])
 
+        # Batch-fetch active subscriptions and approved leaves in 2 queries instead of 2*N queries
+        student_ids = [s.id for s in students]
+        all_subs = Subscription.objects.select_related('plan').filter(student_id__in=student_ids).order_by('student_id', '-last_date')
+        latest_subs = {}
+        for sub in all_subs:
+            if sub.student_id not in latest_subs:
+                latest_subs[sub.student_id] = sub
+
+        all_leaves = LeaveRequest.objects.filter(student_id__in=student_ids, status='APPROVED')
+        leaves_by_student = {}
+        for l in all_leaves:
+            leaves_by_student.setdefault(l.student_id, []).append({
+                'start_date': l.start_date,
+                'end_date': l.end_date,
+                'status': l.status
+            })
+
+        eligible_items = []
         for s in students:
-            sub = Subscription.objects.filter(student=s).order_by('-last_date').first()
+            sub = latest_subs.get(s.id)
             if not sub:
                 continue
 
-            approved_leaves = [
-                {'start_date': l.start_date, 'end_date': l.end_date, 'status': l.status}
-                for l in LeaveRequest.objects.filter(student=s, status='APPROVED')
-            ]
-
+            approved_leaves = leaves_by_student.get(s.id, [])
             eligibility = check_leave_eligibility(
                 sub.start_date,
                 sub.last_date,

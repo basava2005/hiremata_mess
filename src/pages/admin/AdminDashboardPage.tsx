@@ -78,7 +78,7 @@ export const AdminDashboardPage: React.FC = () => {
   const { data: resetRequests = [] } = useQuery({
     queryKey: ['adminPasswordResetRequests'],
     queryFn: () => authApi.getPasswordResetRequests(),
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   })
 
   const pendingResetCount = resetRequests.filter((r) => r.status === 'PENDING').length
